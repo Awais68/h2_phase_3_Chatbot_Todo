@@ -1,0 +1,194 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 3000
+    targetPort: http
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: todo-app
+    component: frontend
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8000
+    targetPort: http
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: todo-app
+    component: backend
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: redis
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis
+    protocol: TCP
+  - name: metrics
+    port: 9121
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: todo-app
+    component: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-service
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: kafka
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: kafka
+    port: 9092
+    targetPort: kafka
+    protocol: TCP
+  - name: kafka-internal
+    port: 9093
+    targetPort: kafka-internal
+    protocol: TCP
+  - name: metrics
+    port: 9308
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: todo-app
+    component: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-service
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: zookeeper
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: client
+    port: 2181
+    targetPort: client
+    protocol: TCP
+  - name: peer
+    port: 2888
+    targetPort: peer
+    protocol: TCP
+  - name: leader-election
+    port: 3888
+    targetPort: leader-election
+    protocol: TCP
+  selector:
+    app: todo-app
+    component: zookeeper
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: postgres
+spec:
+  type: ClusterIP
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: postgres
+    protocol: TCP
+  selector:
+    app: todo-app
+    component: postgres
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: todo-app-sa
+  namespace: todo-app
+  labels:
+    app: todo-app
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: todo-app-role
+  namespace: todo-app
+  labels:
+    app: todo-app
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: todo-app-rolebinding
+  namespace: todo-app
+  labels:
+    app: todo-app
+subjects:
+- kind: ServiceAccount
+  name: todo-app-sa
+  namespace: todo-app
+roleRef:
+  kind: Role
+  name: todo-app-role
+  apiGroup: rbac.authorization.k8s.io

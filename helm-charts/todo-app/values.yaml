@@ -1,0 +1,316 @@
+# Default values for todo-app Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings
+global:
+  environment: production
+  domain: todo-app.example.com
+  storageClass: standard
+
+# Namespace
+namespace: todo-app
+
+# Frontend Configuration
+frontend:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: todo-app/frontend
+    tag: "2.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  env:
+    NODE_ENV: production
+    NEXT_PUBLIC_APP_NAME: "Todo Evolution"
+  livenessProbe:
+    httpGet:
+      path: /api/health
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  readinessProbe:
+    httpGet:
+      path: /api/ready
+      port: 3000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+  dapr:
+    enabled: true
+    appId: frontend
+    appPort: 3000
+
+# Backend Configuration
+backend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: todo-app/backend
+    tag: "2.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  env:
+    LOG_LEVEL: warn
+    BACKEND_WORKERS: "4"
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+  dapr:
+    enabled: true
+    appId: backend
+    appPort: 8000
+
+# PostgreSQL Configuration (using Bitnami chart)
+postgresql:
+  enabled: true
+  auth:
+    username: postgres
+    password: ""  # Set via --set postgresql.auth.password
+    database: todo_db
+  primary:
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+    persistence:
+      enabled: true
+      size: 50Gi
+      storageClass: standard
+  metrics:
+    enabled: true
+
+# Redis Configuration (using Bitnami chart)
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: ""  # Set via --set redis.auth.password
+  master:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: standard
+  metrics:
+    enabled: true
+
+# Kafka Configuration (using Bitnami chart)
+kafka:
+  enabled: true
+  replicaCount: 3
+  zookeeper:
+    replicaCount: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  persistence:
+    enabled: true
+    size: 50Gi
+    storageClass: standard
+  metrics:
+    kafka:
+      enabled: true
+    jmx:
+      enabled: true
+  extraConfig: |
+    offsets.topic.replication.factor=3
+    transaction.state.log.replication.factor=3
+    default.replication.factor=3
+    min.insync.replicas=2
+    auto.create.topics.enable=true
+    num.partitions=3
+
+# Dapr Configuration
+dapr:
+  enabled: true
+  config:
+    mtls:
+      enabled: true
+    tracing:
+      enabled: true
+      samplingRate: "1"
+    metrics:
+      enabled: true
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+  hosts:
+    - host: todo-app.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: backend
+        - path: /
+          pathType: Prefix
+          backend: frontend
+    - host: api.todo-app.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend: backend
+  tls:
+    - secretName: todo-app-tls
+      hosts:
+        - todo-app.example.com
+        - api.todo-app.example.com
+
+# ServiceAccount
+serviceAccount:
+  create: true
+  name: todo-app-sa
+  annotations: {}
+
+# RBAC Configuration
+rbac:
+  create: true
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  frontend:
+    enabled: true
+    minAvailable: 2
+  backend:
+    enabled: true
+    minAvailable: 1
+
+# Network Policies
+networkPolicy:
+  enabled: false
+  policyTypes:
+    - Ingress
+    - Egress
+
+# Monitoring & Observability
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+  grafana:
+    enabled: true
+  jaeger:
+    enabled: true
+
+# Security
+security:
+  podSecurityPolicy:
+    enabled: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+    capabilities:
+      drop:
+        - ALL
+
+# ConfigMap Data
+configMap:
+  APP_NAME: "Todo Evolution"
+  APP_VERSION: "2.0.0"
+  ENABLE_VOICE_FEATURES: "true"
+  ENABLE_AI_OPTIMIZATION: "true"
+  ENABLE_OFFLINE_SYNC: "true"
+  ENABLE_PUSH_NOTIFICATIONS: "true"
+
+# Secrets (should be set via --set-file or external secret management)
+secrets:
+  DATABASE_PASSWORD: ""
+  JWT_SECRET_KEY: ""
+  REDIS_PASSWORD: ""
+  OPENAI_API_KEY: ""
+  AZURE_SPEECH_KEY: ""
+
+# Feature Flags
+features:
+  voice: true
+  ai: true
+  offline: true
+  notifications: true
+
+# Resource Quotas
+resourceQuota:
+  enabled: false
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    persistentvolumeclaims: "10"
+
+# Limit Ranges
+limitRange:
+  enabled: false
+  limits:
+    - type: Pod
+      max:
+        cpu: "4"
+        memory: 4Gi
+    - type: Container
+      default:
+        cpu: 200m
+        memory: 512Mi

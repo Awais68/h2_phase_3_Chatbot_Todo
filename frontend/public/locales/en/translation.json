@@ -1,0 +1,211 @@
+{
+  "app": {
+    "name": "Mission Impossible",
+    "tagline": "Your Ultimate Task Management Solution",
+    "description": "Complete your impossible missions with style"
+  },
+  "nav": {
+    "space": "Space",
+    "protocol": "Protocol",
+    "login": "Login",
+    "startFree": "Start Free",
+    "dashboard": "Dashboard",
+    "missions": "Missions",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "title": "Mission Control",
+    "missions": "Missions",
+    "completedMissions": "Completed Missions",
+    "upcomingMissions": "Upcoming Missions",
+    "impossibleMissions": "Impossible Missions",
+    "highPriorityMissions": "High Priority Missions",
+    "slowMissions": "Slow Missions",
+    "recurringMissions": "Recurring Missions",
+    "totalMissions": "Total Missions",
+    "inProgress": "In Progress",
+    "pending": "Pending",
+    "overdue": "Overdue"
+  },
+  "mission": {
+    "new": "New Mission",
+    "add": "Add Mission",
+    "edit": "Edit Mission",
+    "delete": "Delete Mission",
+    "view": "View Mission",
+    "start": "Start Mission",
+    "complete": "Complete Mission",
+    "pause": "Pause Mission",
+    "archive": "Archive Mission",
+    "restore": "Restore Mission",
+    "title": "Mission Title",
+    "description": "Description",
+    "dueDate": "Due Date",
+    "priority": "Priority",
+    "status": "Status",
+    "category": "Category",
+    "notes": "Notes",
+    "noMissions": "No missions yet",
+    "noMissionsDesc": "Create your first impossible mission to get started",
+    "filterAll": "All",
+    "filterActive": "Active",
+    "filterCompleted": "Completed"
+  },
+  "priority": {
+    "critical": "Critical",
+    "high": "High",
+    "normal": "Normal",
+    "low": "Low",
+    "trivial": "Trivial"
+  },
+  "status": {
+    "completed": "Completed",
+    "pending": "Pending",
+    "inProgress": "In Progress",
+    "cancelled": "Cancelled",
+    "failed": "Failed"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "sort": "Sort",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "export": "Export",
+    "import": "Import",
+    "share": "Share",
+    "duplicate": "Duplicate",
+    "archive": "Archive",
+    "confirm": "Confirm",
+    "submit": "Submit",
+    "reset": "Reset",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "start": "Start",
+    "stop": "Stop"
+  },
+  "auth": {
+    "login": "Sign In",
+    "signup": "Sign Up",
+    "logout": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "rememberMe": "Remember Me",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signUp": "Sign Up",
+    "signIn": "Sign In",
+    "secretSubmit": "Submit Secret",
+    "welcomeBack": "Welcome Back, Agent",
+    "enterCredentials": "Enter your credentials to access your missions"
+  },
+  "voice": {
+    "title": "Voice Assistant",
+    "toggle": "Toggle Voice",
+    "pushToTalk": "Push to Talk",
+    "continuousMode": "Continuous Mode",
+    "listening": "Listening...",
+    "processing": "Processing...",
+    "speakNow": "Speak now",
+    "language": "Language",
+    "help": "Voice Commands",
+    "notSupported": "Voice commands are not supported in your browser",
+    "permissionDenied": "Microphone permission denied",
+    "transcript": "Transcript",
+    "confidence": "Confidence",
+    "lowConfidence": "Low confidence - please speak clearly",
+    "commands": {
+      "add": "Add task [title]",
+      "list": "List tasks",
+      "complete": "Complete task [id]",
+      "delete": "Delete task [id]",
+      "update": "Update task [id] [new title]"
+    },
+    "feedback": {
+      "success": "Command executed successfully",
+      "error": "Command failed",
+      "unknown": "Command not recognized",
+      "listening": "I am listening",
+      "obey": "Obeying command",
+      "unknownCommand": "Unknown command"
+    }
+  },
+  "loading": {
+    "initializing": "Initializing missions...",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "syncing": "Syncing...",
+    "processing": "Processing..."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "noNotifications": "No notifications",
+    "missionCreated": "Mission created successfully",
+    "missionUpdated": "Mission updated successfully",
+    "missionDeleted": "Mission deleted",
+    "missionCompleted": "Mission completed!",
+    "error": "An error occurred",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "network": "Network error. Please check your connection.",
+    "notFound": "Resource not found",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Forbidden",
+    "validation": "Validation error",
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "shortPassword": "Password must be at least 8 characters",
+    "mismatchedPasswords": "Passwords do not match"
+  },
+  "dialogs": {
+    "confirmDelete": {
+      "title": "Confirm Deletion",
+      "message": "Are you sure you want to delete this mission? This action cannot be undone."
+    },
+    "confirmComplete": {
+      "title": "Complete Mission",
+      "message": "Are you sure you want to mark this mission as complete?"
+    },
+    "unsavedChanges": {
+      "title": "Unsaved Changes",
+      "message": "You have unsaved changes. Do you want to discard them?"
+    }
+  },
+  "dateTime": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
+    "due": "Due",
+    "overdue": "Overdue",
+    "daysAgo": "{{count}} days ago",
+    "hoursAgo": "{{count}} hours ago",
+    "minutesAgo": "{{count}} minutes ago",
+    "justNow": "Just now",
+    "inDays": "In {{count}} days",
+    "inHours": "In {{count}} hours"
+  },
+  "language": {
+    "switch": "Switch Language",
+    "current": "Current Language",
+    "english": "English",
+    "urdu": "Urdu",
+    "selectLanguage": "Select Language"
+  }
+}

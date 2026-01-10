@@ -1,0 +1,30 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Task 1",
+      "description": "Description 1",
+      "completed": true,
+      "priority": "none",
+      "due_date": null,
+      "recurrence": "none",
+      "tags": [],
+      "created_at": "2025-12-27T17:43:29.052040",
+      "updated_at": "2025-12-27T17:43:29.053301"
+    },
+    {
+      "id": 2,
+      "title": "Task 2",
+      "description": "Description 2",
+      "completed": false,
+      "priority": "none",
+      "due_date": null,
+      "recurrence": "none",
+      "tags": [],
+      "created_at": "2025-12-27T17:43:29.052647",
+      "updated_at": "2025-12-27T17:43:29.052650"
+    }
+  ],
+  "next_id": 3,
+  "saved_at": "2025-12-27T17:43:29.053313"
+}

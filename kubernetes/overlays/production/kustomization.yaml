@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: todo-app
+
+commonLabels:
+  environment: production
+  tier: production
+
+bases:
+  - ../../base
+
+patchesStrategicMerge:
+  - deployment-patches.yaml
+  - configmap-patches.yaml
+
+replicas:
+  - name: frontend
+    count: 3
+  - name: backend
+    count: 2
+
+configMapGenerator:
+  - name: todo-app-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=warn
+      - BACKEND_RELOAD=false
+      - ENABLE_METRICS=true
+      - ENABLE_TRACING=true
+
+images:
+  - name: todo-app/frontend
+    newTag: v2.0.0
+  - name: todo-app/backend
+    newTag: v2.0.0

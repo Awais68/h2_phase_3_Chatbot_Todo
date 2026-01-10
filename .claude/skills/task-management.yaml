@@ -1,0 +1,467 @@
+# Task Management Skill for Claude Code
+# Reusable CRUD operations for task management that can be imported into any project
+
+name: task-management
+version: 1.0.0
+description: Reusable task management skill providing CRUD operations for tasks with CLI and API support
+
+# Skill category for organization
+category: productivity
+tags:
+  - task-management
+  - crud
+  - productivity
+  - todo
+
+# Operations this skill provides
+operations:
+  add_task:
+    description: Add a new task
+    input:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Task title (required)
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          description: Task description (optional)
+          maxLength: 1000
+        priority:
+          type: string
+          enum: [high, medium, low]
+          description: Task priority (optional)
+        due_date:
+          type: string
+          format: date-time
+          description: Due date (optional)
+      required:
+        - title
+    output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        task_id:
+          type: integer
+        message:
+          type: string
+    examples:
+      - input:
+          title: Buy groceries
+          description: Milk, eggs, bread
+          priority: medium
+        output:
+          success: true
+          task_id: 1
+          message: Task created successfully
+
+  list_tasks:
+    description: List all tasks with optional filtering
+    input:
+      type: object
+      properties:
+        completed:
+          type: boolean
+          description: Filter by completion status (optional)
+        priority:
+          type: string
+          enum: [high, medium, low]
+          description: Filter by priority (optional)
+        limit:
+          type: integer
+          description: Maximum number of tasks to return (optional)
+          minimum: 1
+          maximum: 1000
+        offset:
+          type: integer
+          description: Number of tasks to skip (optional)
+          minimum: 0
+    output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        tasks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              title:
+                type: string
+              description:
+                type: string
+              completed:
+                type: boolean
+              priority:
+                type: string
+              created_at:
+                type: string
+        total_count:
+          type: integer
+        message:
+          type: string
+    examples:
+      - input:
+          completed: false
+          limit: 10
+        output:
+          success: true
+          tasks:
+            - id: 1
+              title: Buy groceries
+              description: Milk, eggs, bread
+              completed: false
+              priority: medium
+              created_at: "2025-12-26T10:00:00Z"
+          total_count: 1
+          message: Found 1 task
+
+  get_task:
+    description: Get a specific task by ID
+    input:
+      type: object
+      properties:
+        task_id:
+          type: integer
+          description: Task ID to retrieve
+      required:
+        - task_id
+    output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        task:
+          type: object
+          properties:
+            id:
+              type: integer
+            title:
+              type: string
+            description:
+              type: string
+            completed:
+              type: boolean
+            priority:
+              type: string
+            created_at:
+              type: string
+            updated_at:
+              type: string
+        message:
+          type: string
+    examples:
+      - input:
+          task_id: 1
+        output:
+          success: true
+          task:
+            id: 1
+            title: Buy groceries
+            description: Milk, eggs, bread
+            completed: false
+            priority: medium
+            created_at: "2025-12-26T10:00:00Z"
+            updated_at: "2025-12-26T10:00:00Z"
+          message: Task retrieved successfully
+
+  update_task:
+    description: Update an existing task
+    input:
+      type: object
+      properties:
+        task_id:
+          type: integer
+          description: Task ID to update
+        title:
+          type: string
+          description: New title (optional)
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          description: New description (optional)
+          maxLength: 1000
+        completed:
+          type: boolean
+          description: Completion status (optional)
+        priority:
+          type: string
+          enum: [high, medium, low]
+          description: New priority (optional)
+      required:
+        - task_id
+    output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        task:
+          type: object
+        message:
+          type: string
+    examples:
+      - input:
+          task_id: 1
+          title: Buy groceries and household items
+          priority: high
+        output:
+          success: true
+          task:
+            id: 1
+            title: Buy groceries and household items
+            priority: high
+          message: Task updated successfully
+
+  complete_task:
+    description: Mark a task as completed
+    input:
+      type: object
+      properties:
+        task_id:
+          type: integer
+          description: Task ID to complete
+      required:
+        - task_id
+    output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+    examples:
+      - input:
+          task_id: 1
+        output:
+          success: true
+          message: Task completed successfully
+
+  delete_task:
+    description: Delete a task permanently
+    input:
+      type: object
+      properties:
+        task_id:
+          type: integer
+          description: Task ID to delete
+      required:
+        - task_id
+    output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+    examples:
+      - input:
+          task_id: 1
+        output:
+          success: true
+          message: Task deleted successfully
+
+  search_tasks:
+    description: Search tasks by keyword
+    input:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Search query
+          minLength: 1
+        fields:
+          type: array
+          items:
+            type: string
+            enum: [title, description]
+          description: Fields to search in (optional)
+      required:
+        - query
+    output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        tasks:
+          type: array
+        match_count:
+          type: integer
+        message:
+          type: string
+    examples:
+      - input:
+          query: groceries
+          fields: [title, description]
+        output:
+          success: true
+          tasks:
+            - id: 1
+              title: Buy groceries
+              description: Milk, eggs, bread
+          match_count: 1
+          message: Found 1 matching task
+
+  bulk_operations:
+    description: Perform bulk operations on multiple tasks
+    input:
+      type: object
+      properties:
+        task_ids:
+          type: array
+          items:
+            type: integer
+          description: Task IDs to operate on
+        operation:
+          type: string
+          enum: [complete, delete, update_priority]
+          description: Operation to perform
+        parameters:
+          type: object
+          description: Operation-specific parameters
+      required:
+        - task_ids
+        - operation
+    output:
+      type: object
+      properties:
+        success:
+          type: boolean
+        affected_count:
+          type: integer
+        message:
+          type: string
+    examples:
+      - input:
+          task_ids: [1, 2, 3]
+          operation: complete
+        output:
+          success: true
+          affected_count: 3
+          message: 3 tasks completed successfully
+
+# Interface support
+interfaces:
+  cli:
+    enabled: true
+    commands:
+      - "task add <title> [--description <desc>] [--priority <priority>]"
+      - "task list [--completed] [--priority <priority>]"
+      - "task get <id>"
+      - "task update <id> [--title <title>] [--description <desc>]"
+      - "task complete <id>"
+      - "task delete <id>"
+      - "task search <query>"
+
+  api:
+    enabled: true
+    endpoints:
+      - method: POST
+        path: /tasks
+        operation: add_task
+      - method: GET
+        path: /tasks
+        operation: list_tasks
+      - method: GET
+        path: /tasks/{id}
+        operation: get_task
+      - method: PATCH
+        path: /tasks/{id}
+        operation: update_task
+      - method: POST
+        path: /tasks/{id}/complete
+        operation: complete_task
+      - method: DELETE
+        path: /tasks/{id}
+        operation: delete_task
+      - method: GET
+        path: /tasks/search
+        operation: search_tasks
+
+  web:
+    enabled: true
+    components:
+      - TaskList
+      - TaskCard
+      - AddTaskForm
+      - TaskDetailView
+
+# Reusability configuration
+reusability:
+  portable: true
+  dependencies:
+    python:
+      - sqlmodel>=0.0.14
+      - fastapi>=0.109.0
+      - pydantic>=2.5.0
+    javascript:
+      - react>=18.0.0
+      - axios>=1.6.0
+  compatible_with:
+    - cli-applications
+    - web-applications
+    - mobile-applications
+    - api-services
+  installation:
+    instructions: |
+      1. Copy this skill YAML to your project's .claude/skills/ directory
+      2. Install required dependencies
+      3. Import the skill in your Claude Code configuration
+      4. Use the operations in your commands or API endpoints
+
+# Configuration
+configuration:
+  storage:
+    type: database
+    options:
+      - in-memory
+      - postgresql
+      - sqlite
+  validation:
+    enabled: true
+    strict_mode: false
+  error_handling:
+    retry_attempts: 3
+    timeout_seconds: 30
+
+# Documentation
+documentation:
+  usage: |
+    This skill provides comprehensive task management operations that can be used
+    across CLI, API, and web interfaces. It follows CRUD patterns and includes
+    advanced features like search, bulk operations, and filtering.
+
+  examples:
+    - name: Add a task via CLI
+      command: task add "Buy groceries" --priority high
+
+    - name: List all incomplete tasks
+      command: task list --completed false
+
+    - name: Search for tasks
+      command: task search "groceries"
+
+    - name: Complete multiple tasks
+      command: task bulk-complete 1,2,3
+
+  best_practices:
+    - Always validate task IDs before operations
+    - Use bulk operations for multiple tasks to improve performance
+    - Implement pagination for large task lists
+    - Add appropriate error handling for all operations
+    - Use transactions for bulk operations to ensure consistency
+
+# Version history
+changelog:
+  - version: 1.0.0
+    date: 2025-12-26
+    changes:
+      - Initial release with core CRUD operations
+      - CLI, API, and web interface support
+      - Bulk operations support
+      - Search functionality

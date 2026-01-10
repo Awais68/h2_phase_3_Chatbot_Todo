@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-app-config
+data:
+  LOG_LEVEL: "info"
+  BACKEND_RELOAD: "false"
+  ENABLE_METRICS: "true"
+  ENABLE_TRACING: "true"
+  CORS_ORIGINS: "https://staging.todo-app.example.com"

@@ -1,0 +1,180 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+  namespace: todo-app
+spec:
+  type: state.redis
+  version: v1
+  metadata:
+  - name: redisHost
+    value: redis-service:6379
+  - name: redisPassword
+    secretKeyRef:
+      name: todo-app-secrets
+      key: REDIS_PASSWORD
+  - name: actorStateStore
+    value: "true"
+  - name: enableTLS
+    value: "false"
+  - name: maxRetries
+    value: "3"
+  - name: maxRetryBackoff
+    value: "2000"
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+  namespace: todo-app
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "kafka-0.kafka-service:9092,kafka-1.kafka-service:9092,kafka-2.kafka-service:9092"
+  - name: consumerGroup
+    value: "todo-app-consumer-group"
+  - name: clientID
+    value: "todo-app"
+  - name: authType
+    value: "none"
+  - name: maxMessageBytes
+    value: "1024000"
+  - name: consumeRetryInterval
+    value: "200ms"
+  - name: version
+    value: "2.8.0"
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: bindings
+  namespace: todo-app
+spec:
+  type: bindings.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "kafka-0.kafka-service:9092,kafka-1.kafka-service:9092,kafka-2.kafka-service:9092"
+  - name: topics
+    value: "task.created,task.updated,task.deleted,task.completed"
+  - name: consumerGroup
+    value: "todo-app-bindings-group"
+  - name: publishTopic
+    value: "task.events"
+  - name: authType
+    value: "none"
+---
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: dapr-config
+  namespace: todo-app
+spec:
+  tracing:
+    samplingRate: "1"
+    zipkin:
+      endpointAddress: "http://jaeger-collector:9411/api/v2/spans"
+  mtls:
+    enabled: true
+    workloadCertTTL: "24h"
+    allowedClockSkew: "15m"
+  metric:
+    enabled: true
+  features:
+    - name: ServiceInvocation
+      enabled: true
+    - name: StateManagement
+      enabled: true
+    - name: PubSub
+      enabled: true
+    - name: Bindings
+      enabled: true
+  accessControl:
+    defaultAction: deny
+    trustDomain: "public"
+    policies:
+    - appId: backend
+      defaultAction: allow
+      trustDomain: 'public'
+      namespace: "todo-app"
+      operations:
+      - name: /api/*
+        httpVerb: ['*']
+        action: allow
+    - appId: frontend
+      defaultAction: allow
+      trustDomain: 'public'
+      namespace: "todo-app"
+      operations:
+      - name: /*
+        httpVerb: ['GET', 'POST']
+        action: allow
+  api:
+    allowed:
+    - name: state
+      version: v1
+      protocol: http
+    - name: pubsub
+      version: v1
+      protocol: http
+    - name: bindings
+      version: v1
+      protocol: http
+---
+apiVersion: dapr.io/v1alpha1
+kind: Subscription
+metadata:
+  name: task-events-subscription
+  namespace: todo-app
+spec:
+  topic: task.created
+  route: /events/task/created
+  pubsubname: pubsub
+  metadata:
+    rawPayload: "false"
+  scopes:
+  - backend
+---
+apiVersion: dapr.io/v1alpha1
+kind: Subscription
+metadata:
+  name: task-updated-subscription
+  namespace: todo-app
+spec:
+  topic: task.updated
+  route: /events/task/updated
+  pubsubname: pubsub
+  metadata:
+    rawPayload: "false"
+  scopes:
+  - backend
+---
+apiVersion: dapr.io/v1alpha1
+kind: Subscription
+metadata:
+  name: task-deleted-subscription
+  namespace: todo-app
+spec:
+  topic: task.deleted
+  route: /events/task/deleted
+  pubsubname: pubsub
+  metadata:
+    rawPayload: "false"
+  scopes:
+  - backend
+---
+apiVersion: dapr.io/v1alpha1
+kind: Subscription
+metadata:
+  name: task-completed-subscription
+  namespace: todo-app
+spec:
+  topic: task.completed
+  route: /events/task/completed
+  pubsubname: pubsub
+  metadata:
+    rawPayload: "false"
+  scopes:
+  - backend

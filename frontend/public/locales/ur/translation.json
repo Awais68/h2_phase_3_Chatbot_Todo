@@ -1,0 +1,211 @@
+{
+  "app": {
+    "name": "مشکل مقصد",
+    "tagline": "آپ کا بہترین کام کا انتظام حل",
+    "description": "اپنے مشکل مقاصد کو انداز سے پورے کریں"
+  },
+  "nav": {
+    "space": "خلائی جگہ",
+    "protocol": "پروٹوکول",
+    "login": "لاگ ان",
+    "startFree": "مفت میں شروع کریں",
+    "dashboard": "ڈیش بورڈ",
+    "missions": "مشنان",
+    "settings": "ترتیبات",
+    "profile": "پروفائل",
+    "logout": "لاگ آؤٹ"
+  },
+  "dashboard": {
+    "title": "مشن کنٹرول",
+    "missions": "مشنان",
+    "completedMissions": "مکمل ہوئے مشن",
+    "upcomingMissions": "شروع ہونے والے مشن",
+    "impossibleMissions": "ناممکن مشن",
+    "highPriorityMissions": "زیادہ ترجیحی مشن",
+    "slowMissions": "سست مشن",
+    "recurringMissions": "بار بار چلنے والے مشن",
+    "totalMissions": "کل مشنان",
+    "inProgress": "جاري ہے",
+    "pending": "زیر التواء",
+    "overdue": "تاخیر سے ہو گیا"
+  },
+  "mission": {
+    "new": "نیا مشن",
+    "add": "مشن شامل کریں",
+    "edit": "مشن میں ترمیم کریں",
+    "delete": "مشن حذف کریں",
+    "view": "مشن دیکھیں",
+    "start": "مشن شروع کریں",
+    "complete": "مشن مکمل کریں",
+    "pause": "مشن روکیں",
+    "archive": "مشن محفوظ کریں",
+    "restore": "مشن بحال کریں",
+    "title": "مشن کا عنوان",
+    "description": "تفصیل",
+    "dueDate": "آخری تاریخ",
+    "priority": "ترجیح",
+    "status": "حالت",
+    "category": "قسم",
+    "notes": "نوٹس",
+    "noMissions": "ابھی تک کوئی مشن نہیں",
+    "noMissionsDesc": "شروع کرنے کے لیے اپنا پہلا ناممکن مشن بنائیں",
+    "filterAll": "سب",
+    "filterActive": "فعال",
+    "filterCompleted": "مکمل"
+  },
+  "priority": {
+    "critical": "انتہائی اہم",
+    "high": "زیادہ اہم",
+    "normal": "عام",
+    "low": "کم اہم",
+    "trivial": "معمولی"
+  },
+  "status": {
+    "completed": "مکمل",
+    "pending": "زیر التواء",
+    "inProgress": "جاري ہے",
+    "cancelled": "منسوخ",
+    "failed": "ناکام"
+  },
+  "actions": {
+    "save": "محفوظ کریں",
+    "cancel": "منسوخ کریں",
+    "delete": "حذف کریں",
+    "edit": "ترمیم کریں",
+    "search": "تلاش کریں",
+    "sort": "ترتیب دیں",
+    "filter": "فلٹر کریں",
+    "refresh": "ریفریش کریں",
+    "export": "برآمد کریں",
+    "import": "درآمد کریں",
+    "share": "شیئر کریں",
+    "duplicate": "نقل کریں",
+    "archive": "آرکائیو کریں",
+    "confirm": "تصدیق کریں",
+    "submit": "جمع کرائیں",
+    "reset": "ری سیٹ کریں",
+    "close": "بند کریں",
+    "back": "واپس",
+    "next": "اگلا",
+    "finish": "ختم کریں",
+    "start": "شروع کریں",
+    "stop": "روکیں"
+  },
+  "auth": {
+    "login": "سائن ان",
+    "signup": "سائن اپ",
+    "logout": "سائن آؤٹ",
+    "email": "ای میل",
+    "password": "پاس ورڈ",
+    "confirmPassword": "پاس ورڈ کی تصدیق کریں",
+    "forgotPassword": "پاس ورڈ بھول گئے؟",
+    "resetPassword": "پاس ورڈ ری سیٹ کریں",
+    "rememberMe": "مجھے یاد رکھیں",
+    "noAccount": "کیا آپ کا اکاؤنٹ نہیں ہے؟",
+    "hasAccount": "کیا آپ کا اکاؤنٹ پہلے سے ہے؟",
+    "signUp": "سائن اپ کریں",
+    "signIn": "سائن ان کریں",
+    "secretSubmit": "خفیہ جمع کرائیں",
+    "welcomeBack": "واپسی پر خوش آمدید، ایجنٹ",
+    "enterCredentials": "اپنے مشن تک رسائی کے لیے اپنی اسناد درج کریں"
+  },
+  "voice": {
+    "title": "آواز کا معاون",
+    "toggle": "آواز کو تبدیل کریں",
+    "pushToTalk": "بولنے کے لیے دبائیں",
+    "continuousMode": "مسلسل موڈ",
+    "listening": "سن رہا ہوں...",
+    "processing": "پراسیسنگ...",
+    "speakNow": "اب بولیں",
+    "language": "زبان",
+    "help": "آواز کی کمانڈز",
+    "notSupported": "آپ کے براؤزر میں آواز کی کمانڈز سپورٹ نہیں ہیں",
+    "permissionDenied": "مائیکروفون کی اجازت نہیں دی گئی",
+    "transcript": "ٹرانسکرپٹ",
+    "confidence": "اعتماد",
+    "lowConfidence": "کم اعتماد - صاف بولیں",
+    "commands": {
+      "add": "کام شامل کرو [عنوان]",
+      "list": "تمام کام دکھاؤ",
+      "complete": "کام مکمل کرو [آئی ڈی]",
+      "delete": "کام حذف کرو [آئی ڈی]",
+      "update": "کام تبدیل کرو [آئی ڈی] [نیا عنوان]"
+    },
+    "feedback": {
+      "success": "کمانڈ کامیابی سے انجام دی گئی",
+      "error": "کمانڈ ناکام",
+      "unknown": "کمانڈ سمجھ نہیں آئی",
+      "listening": "سن رہا ہوں",
+      "obey": "حکم مانو",
+      "unknownCommand": "نامعلوم حکم"
+    }
+  },
+  "loading": {
+    "initializing": "مشون شروع ہو رہے ہیں...",
+    "loading": "لوڈ ہو رہا ہے...",
+    "saving": "محفوظ ہو رہا ہے...",
+    "deleting": "حذف ہو رہا ہے...",
+    "syncing": "سینک ہو رہا ہے...",
+    "processing": "پراسیسنگ..."
+  },
+  "notifications": {
+    "title": "اطلاعات",
+    "noNotifications": "کوئی اطلاعات نہیں",
+    "missionCreated": "مشق کامیابی سے بنایا گیا",
+    "missionUpdated": "مشق کامیابی سے اپڈیٹ ہوا",
+    "missionDeleted": "مشق حذف کر دیا گیا",
+    "missionCompleted": "مشق مکمل ہو گیا!",
+    "error": "ایک خرابی پیش آگئی",
+    "success": "کامیابی",
+    "warning": "انتباہ",
+    "info": "معلومات"
+  },
+  "errors": {
+    "generic": "کچھ غلط ہو گیا",
+    "network": "نیٹورک خرابی۔ براہ کرم اپنا کنکشن چیک کریں۔",
+    "notFound": "وسیلہ نہیں ملا",
+    "unauthorized": "غیر مجاز رسائی",
+    "forbidden": "ممنوعہ",
+    "validation": "تصدیق کی خرابی",
+    "required": "یہ فیلد ضروری ہے",
+    "invalidEmail": "غلط ای میل ایڈریس",
+    "shortPassword": "پاس ورڈ کم از کم 8 حروف کا ہونا چاہیے",
+    "mismatchedPasswords": "پاس ورڈ مماثل نہیں ہیں"
+  },
+  "dialogs": {
+    "confirmDelete": {
+      "title": "حذف کرنے کی تصدیق کریں",
+      "message": "کیا آپ واقعی اس مشن کو حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں کیا جا سکتا۔"
+    },
+    "confirmComplete": {
+      "title": "مشق مکمل کریں",
+      "message": "کیا آپ واقعی اس مشن کو مکمل شدہ کے بطور نشان لگانا چاہتے ہیں؟"
+    },
+    "unsavedChanges": {
+      "title": "غیر محفوظ تبدیلیاں",
+      "message": "آپ کی تبدیلیاں محفوظ نہیں ہیں۔ کیا آپ انہ�ں ترک کرنا چاہتے ہیں؟"
+    }
+  },
+  "dateTime": {
+    "today": "آج",
+    "tomorrow": "کل",
+    "yesterday": "گزشتہ کل",
+    "thisWeek": "اس ہفتے",
+    "thisMonth": "اس مہینے",
+    "due": "واجب الادا",
+    "overdue": "تاخیر سے ہو گیا",
+    "daysAgo": "{{count}} دن پہلے",
+    "hoursAgo": "{{count}} گھنٹے پہلے",
+    "minutesAgo": "{{count}} منٹ پہلے",
+    "justNow": "ابھی ابھی",
+    "inDays": "{{count}} دنوں میں",
+    "inHours": "{{count}} گھنٹوں میں"
+  },
+  "language": {
+    "switch": "زبان تبدیل کریں",
+    "current": " موجودہ زبان",
+    "english": "انگریزی",
+    "urdu": "اردو",
+    "selectLanguage": "زبان انتخاب کریں"
+  }
+}

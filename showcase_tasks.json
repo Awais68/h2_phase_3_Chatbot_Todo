@@ -1,0 +1,72 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Complete hackathon project",
+      "description": "Finish Phase I implementation and submit",
+      "completed": false,
+      "priority": "high",
+      "due_date": "2025-12-28",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:26:48.218823",
+      "updated_at": "2025-12-26T19:26:48.218831"
+    },
+    {
+      "id": 2,
+      "title": "Review pull requests",
+      "description": "Check team submissions",
+      "completed": false,
+      "priority": "medium",
+      "due_date": "2025-12-30",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:26:48.724022",
+      "updated_at": "2025-12-26T19:26:48.724031"
+    },
+    {
+      "id": 3,
+      "title": "Update documentation",
+      "description": "Critical: API docs need updating",
+      "completed": false,
+      "priority": "high",
+      "due_date": "2025-12-25",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:26:49.228835",
+      "updated_at": "2025-12-26T19:26:49.228839"
+    },
+    {
+      "id": 4,
+      "title": "Research new technologies",
+      "description": "Investigate AI tools for automation",
+      "completed": false,
+      "priority": "low",
+      "due_date": null,
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:26:49.735465",
+      "updated_at": "2025-12-26T19:26:49.735482"
+    },
+    {
+      "id": 5,
+      "title": "Daily standup meeting",
+      "description": "Team sync at 9am",
+      "completed": true,
+      "priority": "medium",
+      "due_date": "2025-12-27",
+      "recurrence": "daily",
+      "created_at": "2025-12-26T19:26:51.245079",
+      "updated_at": "2025-12-26T19:26:52.252912"
+    },
+    {
+      "id": 6,
+      "title": "Daily standup meeting",
+      "description": "Team sync at 9am",
+      "completed": false,
+      "priority": "medium",
+      "due_date": "2025-12-28",
+      "recurrence": "daily",
+      "created_at": "2025-12-26T19:26:52.253001",
+      "updated_at": "2025-12-26T19:26:52.253007"
+    }
+  ],
+  "next_id": 7,
+  "saved_at": "2025-12-26T19:27:07.156958"
+}

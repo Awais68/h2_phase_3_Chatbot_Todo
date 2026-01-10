@@ -1,0 +1,291 @@
+# ============================================
+# Claude Skills to Agents Mapping Configuration
+# ============================================
+# This file maps each skill to the most relevant agent(s) for execution.
+# Skills are organized by domain/functionality.
+# ============================================
+
+# ==============================================================================
+# BACKEND & API DEVELOPMENT
+# ==============================================================================
+
+- skill: fastapi-app
+  agents:
+    - fastapi-backend          # Primary - FastAPI app creation, routes, dependencies
+    - database-schema-designer # Secondary - DB models integration
+    - deployment-specialist    # Tertiary - Backend deployment to Render
+  priority: high
+  triggers:
+    - "FastAPI"
+    - "API route"
+    - "endpoint"
+    - "uvicorn"
+    - "Pydantic model"
+
+- skill: sqlmodel-crud
+  agents:
+    - database-schema-designer # Primary - SQLModel definitions
+    - crud-task-implementer    # Secondary - CRUD operations
+  triggers:
+    - "SQLModel"
+    - "CRUD"
+    - "model definition"
+
+- skill: jwt-auth
+  agents:
+    - auth-specialist          # Primary - JWT authentication
+    - fastapi-backend          # Secondary - Auth dependencies
+  triggers:
+    - "JWT"
+    - "token"
+    - "authentication"
+
+- skill: api-route-design
+  agents:
+    - fastapi-backend          # Primary - API route patterns
+    - api-integration          # Secondary - Frontend-backend integration
+  triggers:
+    - "API design"
+    - "REST"
+    - "endpoint design"
+
+- skill: db-migration
+  agents:
+    - database-schema-designer # Primary - Schema migrations
+    - deployment-specialist    # Secondary - Render database setup
+  triggers:
+    - "migration"
+    - "Alembic"
+    - "schema update"
+
+# ==============================================================================
+# FRONTEND DEVELOPMENT
+# ==============================================================================
+
+- skill: frontend-nextjs-app-router
+  agents:
+    - nextjs-frontend-architect # Primary - Next.js App Router
+    - ui-ux-designer           # Secondary - UI/UX components
+  triggers:
+    - "Next.js"
+    - "App Router"
+    - "page.tsx"
+    - "layout.tsx"
+
+- skill: react-component
+  agents:
+    - nextjs-frontend-architect # Primary - React components
+    - ui-ux-designer           # Secondary - Component design
+  triggers:
+    - "React component"
+    - "useState"
+    - "useEffect"
+
+- skill: tailwind-css
+  agents:
+    - ui-ux-designer           # Primary - Tailwind styling
+    - nextjs-frontend-architect # Secondary - Integration
+  triggers:
+    - "Tailwind"
+    - "CSS class"
+    - "styling"
+
+# ==============================================================================
+# AUTHENTICATION & SECURITY
+# ==============================================================================
+
+- skill: auth-integration
+  agents:
+    - auth-specialist          # Primary - Authentication
+    - fastapi-backend          # Secondary - Backend auth
+  triggers:
+    - "authentication"
+    - "login"
+    - "session"
+
+# ==============================================================================
+# DATABASE & DATA
+# ==============================================================================
+
+- skill: db-connection
+  agents:
+    - database-schema-designer # Primary - Database connections
+    - deployment-specialist    # Secondary - Neon/Render DB setup
+  triggers:
+    - "database connection"
+    - "DATABASE_URL"
+    - "SQLAlchemy"
+
+- skill: data-validation
+  agents:
+    - database-schema-designer # Primary - Schema validation
+    - fastapi-backend          # Secondary - Pydantic validation
+  triggers:
+    - "validation"
+    - "schema"
+    - "type checking"
+
+# ==============================================================================
+# API INTEGRATION & TESTING
+# ==============================================================================
+
+- skill: api-client
+  agents:
+    - api-integration          # Primary - API client patterns
+    - nextjs-frontend-architect # Secondary - Frontend API calls
+  triggers:
+    - "API client"
+    - "fetch"
+    - "axios"
+
+- skill: api-testing
+  agents:
+    - api-integration          # Primary - API testing
+  triggers:
+    - "test API"
+    - "integration test"
+    - "pytest"
+
+# ==============================================================================
+# ENVIRONMENT & CONFIGURATION
+# ==============================================================================
+
+- skill: env-config
+  agents:
+    - deployment-specialist    # Primary - Environment setup
+  triggers:
+    - "environment variable"
+    - ".env"
+    - "configuration"
+
+- skill: error-handling
+  agents:
+    - fastapi-backend          # Primary - Backend error handling
+    - nextjs-frontend-architect # Secondary - Frontend error states
+  triggers:
+    - "error handling"
+    - "exception"
+    - "try/catch"
+
+# ==============================================================================
+# DEPLOYMENT
+# ==============================================================================
+
+- skill: vercel-deploy
+  agents:
+    - deployment-specialist    # Primary - Vercel deployment
+    - nextjs-frontend-architect # Secondary - Frontend build
+  triggers:
+    - "Vercel"
+    - "deploy frontend"
+    - "vercel.json"
+
+# ==============================================================================
+# SPECIALIZED FEATURES
+# ==============================================================================
+
+- skill: chatkit-widget
+  agents:
+    - nextjs-frontend-architect # Primary - Chat widget
+  triggers:
+    - "chat"
+    - "Chatkit"
+    - "messaging"
+
+- skill: context7-integration
+  agents:
+    - api-integration          # Primary - Context7 docs
+  triggers:
+    - "Context7"
+    - "MCP documentation"
+
+# ==============================================================================
+# PROJECT-SPECIFIC (TODO EVOLUTION)
+# ==============================================================================
+
+- skill: task-management
+  agents:
+    - crud-task-implementer    # Primary - Task CRUD
+    - task-analyzer            # Secondary - Task optimization
+    - task-list-optimizer      # Tertiary - Task organization
+  triggers:
+    - "task"
+    - "todo"
+    - "manage tasks"
+
+# ==============================================================================
+# SKILL CREATION & MANAGEMENT
+# ==============================================================================
+
+- skill: creating-skills
+  agents:
+    - intent-parser            # Primary - Skill creation analysis
+  triggers:
+    - "create skill"
+    - "new skill"
+    - "skill template"
+
+# ==============================================================================
+# MULTI-LANGUAGE & INTERNATIONALIZATION
+# ==============================================================================
+
+- skill: i18n-urdu-specialist
+  agents:
+    - i18n-urdu-specialist     # Primary - Urdu/i18n support
+    - nextjs-frontend-architect # Secondary - Frontend i18n
+  triggers:
+    - "Urdu"
+    - "i18n"
+    - "multilingual"
+    - "translation"
+
+# ==============================================================================
+# VOICE & ACCESSIBILITY
+# ==============================================================================
+
+- skill: voice-commands
+  agents:
+    - voice-interface-specialist # Primary - Voice commands
+  triggers:
+    - "voice"
+    - "speech"
+    - "microphone"
+
+# ==============================================================================
+# AGENT SELECTION GUIDELINES
+# ==============================================================================
+
+"""
+How to choose the right agent for your task:
+
+1. **Backend API tasks** → fastapi-backend
+2. **Database design** → database-schema-designer
+3. **Authentication** → auth-specialist
+4. **Frontend UI** → nextjs-frontend-architect
+5. **Deployment** → deployment-specialist
+6. **Task CRUD** → crud-task-implementer
+7. **Task optimization** → task-analyzer / task-list-optimizer
+8. **Urdu/i18n** → i18n-urdu-specialist
+9. **Voice interface** → voice-interface-specialist
+10. **UI/UX design** → ui-ux-designer
+"""
+
+# ==============================================================================
+# EXAMPLE USAGE
+# ==============================================================================
+
+"""
+# To use a skill with an agent, invoke via Claude Code:
+
+/fastapi-app
+  Create a task endpoint for the Todo app
+
+/frontend-nextjs-app-router
+  Create a dashboard page with task list
+
+/deployment-specialist
+  Deploy backend to Render with Neon database
+
+/database-schema-designer
+  Design User and Task models for SQLModel
+"""

@@ -1,0 +1,50 @@
+apiVersion: v2
+name: todo-app
+description: A cloud-native Todo application with PWA, Voice, and AI capabilities
+type: application
+version: 2.0.0
+appVersion: "2.0.0"
+home: https://todo-app.example.com
+sources:
+  - https://github.com/todo-app/todo-evolution
+keywords:
+  - todo
+  - task-management
+  - pwa
+  - voice-interface
+  - ai-optimization
+  - cloud-native
+  - kubernetes
+  - microservices
+maintainers:
+  - name: Todo App Team
+    email: admin@todo-app.example.com
+    url: https://todo-app.example.com
+icon: https://todo-app.example.com/icon.png
+annotations:
+  category: Productivity
+  licenses: MIT
+  images: |
+    - name: frontend
+      image: todo-app/frontend:2.0.0
+    - name: backend
+      image: todo-app/backend:2.0.0
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+    tags:
+      - database
+  - name: redis
+    version: "17.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+    tags:
+      - cache
+  - name: kafka
+    version: "22.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: kafka.enabled
+    tags:
+      - messaging

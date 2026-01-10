@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+      - name: frontend
+        resources:
+          requests:
+            cpu: 75m
+            memory: 192Mi
+          limits:
+            cpu: 400m
+            memory: 384Mi
+        env:
+        - name: NODE_ENV
+          value: "staging"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: backend
+        resources:
+          requests:
+            cpu: 150m
+            memory: 384Mi
+          limits:
+            cpu: 750m
+            memory: 768Mi
+        env:
+        - name: LOG_LEVEL
+          value: "info"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: postgres
+        resources:
+          requests:
+            cpu: 375m
+            memory: 768Mi
+          limits:
+            cpu: 1500m
+            memory: 1536Mi
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      resources:
+        requests:
+          storage: 30Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+      - name: kafka
+        resources:
+          requests:
+            cpu: 375m
+            memory: 768Mi
+          limits:
+            cpu: 1500m
+            memory: 1536Mi
+        env:
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "2"
+        - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+          value: "2"
+        - name: KAFKA_DEFAULT_REPLICATION_FACTOR
+          value: "2"
+        - name: KAFKA_MIN_INSYNC_REPLICAS
+          value: "1"
+  volumeClaimTemplates:
+  - metadata:
+      name: kafka-data
+    spec:
+      resources:
+        requests:
+          storage: 30Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zookeeper
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+      - name: zookeeper
+        resources:
+          requests:
+            cpu: 150m
+            memory: 384Mi
+          limits:
+            cpu: 375m
+            memory: 768Mi
+  volumeClaimTemplates:
+  - metadata:
+      name: zookeeper-data
+    spec:
+      resources:
+        requests:
+          storage: 7Gi
+  - metadata:
+      name: zookeeper-log
+    spec:
+      resources:
+        requests:
+          storage: 7Gi

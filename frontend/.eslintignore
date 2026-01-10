@@ -1,0 +1,12 @@
+node_modules
+.next
+dist
+build
+out
+coverage
+playwright-report
+test-results
+*.config.js
+*.config.ts
+public/sw.js
+public/workbox-*.js

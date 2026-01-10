@@ -1,0 +1,59 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: todo-app
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - services.yaml
+  - frontend-deployment.yaml
+  - backend-deployment.yaml
+  - postgres-statefulset.yaml
+  - redis-statefulset.yaml
+  - kafka-statefulset.yaml
+  - dapr-components.yaml
+  - ingress.yaml
+  - hpa.yaml
+
+commonLabels:
+  app: todo-app
+  managed-by: kustomize
+  version: v2.0.0
+
+commonAnnotations:
+  description: "Todo Evolution - Cloud-Native Kubernetes Deployment"
+  documentation: "https://github.com/todo-app/docs"
+  contact: "admin@todo-app.example.com"
+
+images:
+  - name: todo-app/frontend
+    newTag: latest
+  - name: todo-app/backend
+    newTag: latest
+
+configMapGenerator:
+  - name: todo-app-env
+    literals:
+      - DEPLOYMENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      - KUBERNETES_VERSION=1.28+
+      - DEPLOYMENT_ENVIRONMENT=base
+
+secretGenerator:
+  - name: todo-app-generated-secrets
+    literals:
+      - DEPLOYMENT_ID=$(uuidgen)
+
+replicas:
+  - name: frontend
+    count: 3
+  - name: backend
+    count: 2
+
+generatorOptions:
+  disableNameSuffixHash: false
+  labels:
+    generator: kustomize
+  annotations:
+    generated-by: kustomize

@@ -1,0 +1,138 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Complete project proposal",
+      "description": "Q1 2025 strategic plan with budget estimates",
+      "completed": false,
+      "priority": "high",
+      "due_date": "2025-12-29",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:23:23.755766",
+      "updated_at": "2025-12-26T19:23:23.755771"
+    },
+    {
+      "id": 2,
+      "title": "Review security audit",
+      "description": "Critical: Address findings from last week's security scan",
+      "completed": false,
+      "priority": "high",
+      "due_date": "2025-12-28",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:23:23.756370",
+      "updated_at": "2025-12-26T19:23:23.756371"
+    },
+    {
+      "id": 3,
+      "title": "Daily standup meeting",
+      "description": "Team sync at 9am",
+      "completed": true,
+      "priority": "medium",
+      "due_date": "2025-12-27",
+      "recurrence": "daily",
+      "created_at": "2025-12-26T19:23:23.757455",
+      "updated_at": "2025-12-26T19:23:23.770198"
+    },
+    {
+      "id": 4,
+      "title": "Weekly team report",
+      "description": "Submit status update to team lead",
+      "completed": false,
+      "priority": "medium",
+      "due_date": "2025-12-31",
+      "recurrence": "weekly",
+      "created_at": "2025-12-26T19:23:23.757923",
+      "updated_at": "2025-12-26T19:23:23.757925"
+    },
+    {
+      "id": 5,
+      "title": "Monthly budget review",
+      "description": "Review and approve departmental expenses",
+      "completed": false,
+      "priority": "high",
+      "due_date": "2026-01-21",
+      "recurrence": "monthly",
+      "created_at": "2025-12-26T19:23:23.758372",
+      "updated_at": "2025-12-26T19:23:23.758373"
+    },
+    {
+      "id": 6,
+      "title": "Update documentation",
+      "description": "Overdue: API docs need updating",
+      "completed": false,
+      "priority": "medium",
+      "due_date": "2025-12-24",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:23:23.758825",
+      "updated_at": "2025-12-26T19:23:23.758826"
+    },
+    {
+      "id": 7,
+      "title": "Client follow-up",
+      "description": "URGENT: Respond to client inquiry from last week",
+      "completed": false,
+      "priority": "high",
+      "due_date": "2025-12-22",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:23:23.759259",
+      "updated_at": "2025-12-26T19:23:23.759260"
+    },
+    {
+      "id": 8,
+      "title": "Refactor old code",
+      "description": "Technical debt: Clean up legacy modules",
+      "completed": false,
+      "priority": "low",
+      "due_date": "2026-01-26",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:23:23.759717",
+      "updated_at": "2025-12-26T19:23:23.759719"
+    },
+    {
+      "id": 9,
+      "title": "Research new frameworks",
+      "description": "Evaluate React alternatives for next project",
+      "completed": false,
+      "priority": "low",
+      "due_date": null,
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:23:23.760178",
+      "updated_at": "2025-12-26T19:23:23.760180"
+    },
+    {
+      "id": 10,
+      "title": "Setup development environment",
+      "description": "Configure local dev setup",
+      "completed": true,
+      "priority": "medium",
+      "due_date": "2025-12-26",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:23:23.760718",
+      "updated_at": "2025-12-26T19:23:23.761040"
+    },
+    {
+      "id": 11,
+      "title": "Buy groceries",
+      "description": "Milk, eggs, bread, vegetables",
+      "completed": false,
+      "priority": "medium",
+      "due_date": "2025-12-27",
+      "recurrence": "none",
+      "created_at": "2025-12-26T19:23:23.761484",
+      "updated_at": "2025-12-26T19:23:23.761486"
+    },
+    {
+      "id": 12,
+      "title": "Daily standup meeting",
+      "description": "Team sync at 9am",
+      "completed": false,
+      "priority": "medium",
+      "due_date": "2025-12-28",
+      "recurrence": "daily",
+      "created_at": "2025-12-26T19:23:23.770216",
+      "updated_at": "2025-12-26T19:23:23.770217"
+    }
+  ],
+  "next_id": 13,
+  "saved_at": "2025-12-26T19:23:23.770248"
+}

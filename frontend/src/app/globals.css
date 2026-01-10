@@ -1,0 +1,510 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Design System Tokens - Cyberpunk/Hacker Theme
+ * For Mission Impossible Task Manager
+ */
+
+/* Color Palette */
+@layer base {
+  :root {
+    --color-primary: #00ffff;
+    --color-primary-hover: #00d4d4;
+    --color-primary-10: rgba(0, 255, 255, 0.1);
+    --color-primary-20: rgba(0, 255, 255, 0.2);
+    --color-primary-30: rgba(0, 255, 255, 0.3);
+
+    --color-secondary: #6b7b8c;
+    --color-secondary-hover: #8a9bac;
+    --color-secondary-10: rgba(107, 123, 140, 0.1);
+
+    --color-accent: #ff0080;
+    --color-accent-hover: #d4006b;
+    --color-accent-10: rgba(255, 0, 128, 0.1);
+
+    --color-warning: #ffb302;
+    --color-destructive: #ff4444;
+    --color-success: #00ff88;
+    --color-info: #00bfff;
+
+    /* Background colors */
+    --color-background: #0a0a0f;
+    --color-background-95: rgba(10, 10, 15, 0.95);
+    --color-background-50: rgba(10, 10, 15, 0.5);
+
+    /* Surface colors */
+    --color-surface: #12121a;
+    --color-surface-50: rgba(18, 18, 26, 0.5);
+    --color-card: #16161f;
+    --color-card-50: rgba(22, 22, 31, 0.5);
+
+    /* Border colors */
+    --color-border: rgba(0, 255, 255, 0.2);
+    --color-border-hover: rgba(0, 255, 255, 0.4);
+
+    /* Text colors */
+    --color-foreground: #e0e0e0;
+    --color-muted-foreground: #888899;
+    --color-foreground-80: rgba(224, 224, 224, 0.8);
+    --color-muted-foreground-60: rgba(136, 136, 153, 0.6);
+
+    /* Typography */
+    --font-display: "Orbitron", sans-serif;
+    --font-mono: "Roboto Mono", monospace;
+    --font-sans: "Noto Sans Urdu", system-ui, sans-serif;
+
+    /* Glow effects */
+    --color-glow-primary: rgba(0, 255, 255, 0.5);
+    --color-glow-secondary: rgba(107, 123, 140, 0.5);
+  }
+}
+
+/* CSS Custom Properties (legacy support) */
+:root {
+  /* Colors */
+  --primary: #00ffff;
+  --primary-hover: #00d4d4;
+  --secondary: #6b7b8c;
+  --accent: #ff0080;
+  --warning: #ffb302;
+  --destructive: #ff4444;
+  --success: #00ff88;
+  --info: #00bfff;
+
+  /* Background */
+  --background: #0a0a0f;
+  --card: #16161f;
+  --surface: #12121a;
+
+  /* Text */
+  --foreground: #e0e0e0;
+  --muted-foreground: #888899;
+
+  /* Border */
+  --border: rgba(0, 255, 255, 0.2);
+}
+
+/* Dark mode support (default) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0f;
+    --foreground: #e0e0e0;
+  }
+}
+
+/* Base styles */
+* {
+  border-color: var(--color-border, rgba(0, 255, 255, 0.2));
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--color-background, #0a0a0f);
+  color: var(--color-foreground, #e0e0e0);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  min-height: 100vh;
+}
+
+/* Custom utility classes */
+
+/* Terminal-style input */
+.input-terminal {
+  background: rgba(18, 18, 26, 0.8);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem 0.75rem 2.75rem; /* Added left padding for icon */
+  color: var(--foreground, #e0e0e0);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.input-terminal::placeholder {
+  color: var(--color-muted-foreground, #888899);
+}
+
+.input-terminal:focus {
+  outline: none;
+  border-color: var(--color-primary, #00ffff);
+  box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.2);
+}
+
+/* Primary button */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary, #00ffff), #00d4d4);
+  color: #0a0a0f;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-hover, #00d4d4),
+    #00b3b3
+  );
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Secondary button */
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--color-primary, #00ffff);
+  color: var(--color-primary, #00ffff);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+/* Glow effects */
+.glow-primary {
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3),
+    0 0 30px rgba(0, 255, 255, 0.1);
+}
+
+.glow-secondary {
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 20px rgba(57, 255, 20, 0.3),
+    0 0 30px rgba(57, 255, 20, 0.1);
+}
+
+/* Cyberpunk card effect */
+.card-cyberpunk {
+  background: var(--color-card, #16161f);
+  border: 1px solid var(--color-border, rgba(0, 255, 255, 0.2));
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(22, 22, 31, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+/* Scan line effect */
+.scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1) 0px,
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+}
+
+/* Text effects */
+.text-glow {
+  text-shadow: 0 0 10px currentColor;
+}
+
+.text-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary, #00ffff),
+    var(--color-secondary, #39ff14)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glitch effect */
+.glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  left: 2px;
+  text-shadow: -2px 0 var(--color-accent, #ff0080);
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  left: -2px;
+  text-shadow: -2px 0 var(--color-secondary, #39ff14);
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% {
+    clip: rect(31px, 9999px, 94px, 0);
+  }
+  5% {
+    clip: rect(70px, 9999px, 71px, 0);
+  }
+  10% {
+    clip: rect(33px, 9999px, 38px, 0);
+  }
+  15% {
+    clip: rect(17px, 9999px, 34px, 0);
+  }
+  20% {
+    clip: rect(85px, 9999px, 75px, 0);
+  }
+  25% {
+    clip: rect(48px, 9999px, 86px, 0);
+  }
+  30% {
+    clip: rect(30px, 9999px, 52px, 0);
+  }
+  35% {
+    clip: rect(82px, 9999px, 54px, 0);
+  }
+  40% {
+    clip: rect(26px, 9999px, 58px, 0);
+  }
+  45% {
+    clip: rect(75px, 9999px, 97px, 0);
+  }
+  50% {
+    clip: rect(56px, 9999px, 15px, 0);
+  }
+  55% {
+    clip: rect(98px, 9999px, 46px, 0);
+  }
+  60% {
+    clip: rect(22px, 9999px, 62px, 0);
+  }
+  65% {
+    clip: rect(81px, 9999px, 83px, 0);
+  }
+  70% {
+    clip: rect(47px, 9999px, 39px, 0);
+  }
+  75% {
+    clip: rect(13px, 9999px, 92px, 0);
+  }
+  80% {
+    clip: rect(64px, 9999px, 20px, 0);
+  }
+  85% {
+    clip: rect(36px, 9999px, 77px, 0);
+  }
+  90% {
+    clip: rect(90px, 9999px, 11px, 0);
+  }
+  95% {
+    clip: rect(42px, 9999px, 69px, 0);
+  }
+  100% {
+    clip: rect(58px, 9999px, 29px, 0);
+  }
+}
+
+@keyframes glitch-anim2 {
+  0% {
+    clip: rect(65px, 9999px, 100px, 0);
+  }
+  5% {
+    clip: rect(25px, 9999px, 80px, 0);
+  }
+  10% {
+    clip: rect(75px, 9999px, 45px, 0);
+  }
+  15% {
+    clip: rect(55px, 9999px, 15px, 0);
+  }
+  20% {
+    clip: rect(5px, 9999px, 95px, 0);
+  }
+  25% {
+    clip: rect(85px, 9999px, 35px, 0);
+  }
+  30% {
+    clip: rect(50px, 9999px, 70px, 0);
+  }
+  35% {
+    clip: rect(10px, 9999px, 60px, 0);
+  }
+  40% {
+    clip: rect(90px, 9999px, 40px, 0);
+  }
+  45% {
+    clip: rect(20px, 9999px, 85px, 0);
+  }
+  50% {
+    clip: rect(40px, 9999px, 30px, 0);
+  }
+  55% {
+    clip: rect(70px, 9999px, 55px, 0);
+  }
+  60% {
+    clip: rect(95px, 9999px, 20px, 0);
+  }
+  65% {
+    clip: rect(15px, 9999px, 90px, 0);
+  }
+  70% {
+    clip: rect(60px, 9999px, 50px, 0);
+  }
+  75% {
+    clip: rect(80px, 9999px, 10px, 0);
+  }
+  80% {
+    clip: rect(35px, 9999px, 75px, 0);
+  }
+  85% {
+    clip: rect(100px, 9999px, 25px, 0);
+  }
+  90% {
+    clip: rect(45px, 9999px, 65px, 0);
+  }
+  95% {
+    clip: rect(30px, 9999px, 88px, 0);
+  }
+  100% {
+    clip: rect(72px, 9999px, 42px, 0);
+  }
+}
+
+/* Card glow hover effect */
+.card-glow-hover {
+  transition: all 0.3s ease;
+}
+
+.card-glow-hover:hover {
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), 0 0 40px rgba(0, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Animation keyframes */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* Animation utilities */
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-scan {
+  animation: scan 3s linear infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface, #12121a);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary, #00ffff);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover, #00d4d4);
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(0, 255, 255, 0.3);
+  color: var(--foreground, #e0e0e0);
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-primary, #00ffff);
+  outline-offset: 2px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+  .hover\:text-foreground:hover {
+    color: var(--foreground, #e0e0e0);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

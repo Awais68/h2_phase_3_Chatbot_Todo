@@ -1,0 +1,41 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: todo-app-staging
+
+namePrefix: staging-
+
+commonLabels:
+  environment: staging
+  tier: staging
+
+bases:
+  - ../../base
+
+resources:
+  - namespace.yaml
+
+patchesStrategicMerge:
+  - deployment-patches.yaml
+  - configmap-patches.yaml
+
+replicas:
+  - name: frontend
+    count: 2
+  - name: backend
+    count: 1
+
+configMapGenerator:
+  - name: todo-app-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=info
+      - BACKEND_RELOAD=false
+      - ENABLE_METRICS=true
+      - ENABLE_TRACING=true
+
+images:
+  - name: todo-app/frontend
+    newTag: staging-latest
+  - name: todo-app/backend
+    newTag: staging-latest
