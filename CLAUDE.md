@@ -208,3 +208,10 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Active Technologies
+- Python 3.13+ (backend), JavaScript/TypeScript (frontend) (001-todo-ai-chatbot)
+- Neon Serverless PostgreSQL (tasks, conversations, messages) (001-todo-ai-chatbot)
+
+## Recent Changes
+- 001-todo-ai-chatbot: Added Python 3.13+ (backend), JavaScript/TypeScript (frontend)

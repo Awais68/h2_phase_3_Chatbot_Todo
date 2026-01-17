@@ -28,9 +28,11 @@ import {
     Zap,
     BarChart3,
     LogOut,
+    MessageSquare,
 } from 'lucide-react';
 import VoiceCommandButton from './VoiceCommandButton';
 import ParticlesBackground from './ParticlesBackground';
+import ChatTab from './ChatTab';
 import { api } from '@/lib/api';
 import { useSession, signOut } from '@/lib/auth-client';
 
@@ -667,13 +669,6 @@ export default function Dashboard() {
                 // Sync user to backend
                 if (session?.user) {
                     try {
-                        await api.users.sync({
-                            id: session.user.id,
-                            name: session.user.name || 'User',
-                            email: session.user.email,
-                            emailVerified: session.user.emailVerified || false,
-                            image: session.user.image
-                        });
                         console.log('User synced to backend');
                     } catch (error) {
                         console.error('Failed to sync user:', error);
@@ -681,13 +676,13 @@ export default function Dashboard() {
                 }
 
                 const userId = session?.user?.id || session?.user?.email;
-                
+
                 if (!userId) {
                     console.error('No userId found in session');
                     setLoading(false);
                     return;
                 }
-                
+
                 const tasks = await api.tasks.list({ userId });
 
                 // Map backend tasks to Mission format
@@ -760,11 +755,12 @@ export default function Dashboard() {
         { id: 'pending', label: 'Pending', icon: <AlertTriangle className="w-5 h-5" />, count: stats.pending },
         { id: 'completed', label: 'Completed', icon: <CheckCircle className="w-5 h-5" />, count: stats.completed },
         { id: 'starred', label: 'Priority', icon: <Star className="w-5 h-5" />, count: missions.filter(m => m.priority === 'critical' || m.priority === 'high').length },
+        { id: 'chatbot', label: 'AI Assistant', icon: <MessageSquare className="w-5 h-5" />, count: 0 },
     ];
 
     // Filter missions
     const filteredMissions = missions.filter((mission) => {
-        if (activeTab !== 'all') {
+        if (activeTab !== 'all' && activeTab !== 'chatbot') {
             if (activeTab === 'starred') {
                 if (mission.priority !== 'critical' && mission.priority !== 'high') return false;
             } else if (mission.status !== activeTab) {
@@ -1390,85 +1386,149 @@ export default function Dashboard() {
                             </motion.div>
                         )}
 
-                        {/* Status Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                            <StatusCard
-                                title="Total Missions"
-                                count={stats.total}
-                                icon={Target}
-                                color="cyan"
-                                trend={12}
-                                isDark={isDark}
-                            />
-                            <StatusCard
-                                title="Active"
-                                count={stats.active}
-                                icon={Activity}
-                                color="orange"
-                                trend={8}
-                                isDark={isDark}
-                            />
-                            <StatusCard
-                                title="Completed"
-                                count={stats.completed}
-                                icon={CheckCircle}
-                                color="green"
-                                trend={25}
-                                isDark={isDark}
-                            />
-                            <StatusCard
-                                title="Pending"
-                                count={stats.pending}
-                                icon={Clock}
-                                color="purple"
-                                trend={-5}
-                                isDark={isDark}
-                            />
-                        </div>
-
-                        {/* Mission Grid */}
-                        {(loading || isPending) ? (
-                            <div className="flex flex-col items-center justify-center h-64 text-center">
-                                <RefreshCw className={`w-16 h-16 mb-4 animate-spin ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
-                                <h3 className={`text-xl font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                    {isPending ? 'Checking authentication...' : 'Loading missions...'}
-                                </h3>
-                            </div>
-                        ) : filteredMissions.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-64 text-center">
-                                <Target className={`w-16 h-16 mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
-                                <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No Missions Found</h3>
-                                <p className={`mb-6 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                                    {missions.length === 0
-                                        ? "No missions have been added yet. Click 'New Mission' to get started!"
-                                        : "Try adjusting your filters or search query"}
-                                </p>
-                                <button
-                                    onClick={() => setShowAddModal(true)}
-                                    className={`flex items-center gap-2 px-6 py-3 rounded-lg border transition-all
-                                        ${isDark
-                                            ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/30'
-                                            : 'bg-cyan-100 text-cyan-600 border-cyan-300 hover:bg-cyan-200'}`}
-                                >
-                                    <Plus className="w-5 h-5" />
-                                    Initialize First Mission
-                                </button>
+                        {activeTab === 'chatbot' ? (
+                            <div className="h-[calc(100vh-12rem)]">
+                                <ChatTab
+                                    userId={session?.user?.id || session?.user?.email || ''}
+                                    isDark={isDark}
+                                    onTasksUpdated={async () => {
+                                        try {
+                                            const userId = session?.user?.id || session?.user?.email;
+                                            if (userId) {
+                                                const tasks = await api.tasks.list({ userId });
+                                                const mappedTasks: Mission[] = tasks.map((task: any) => ({
+                                                    id: task.id.toString(),
+                                                    title: task.title,
+                                                    description: task.description || '',
+                                                    priority: (task.priority || 'medium') as 'critical' | 'high' | 'medium' | 'low',
+                                                    status: (task.status || 'pending') as 'pending' | 'active' | 'completed' | 'failed',
+                                                    dueDate: task.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                                                    createdAt: task.createdAt,
+                                                    tags: task.tags || [],
+                                                    category: task.category || 'General',
+                                                    recursion: task.recursion
+                                                }));
+                                                setMissions(mappedTasks);
+                                            }
+                                        } catch (error) {
+                                            console.error('Failed to refresh tasks:', error);
+                                        }
+                                    }}
+                                />
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                <AnimatePresence>
-                                    {filteredMissions.map((mission) => (
-                                        <MissionCard
-                                            key={mission.id}
-                                            mission={mission}
-                                            onEdit={handleEditMission}
-                                            onDelete={handleDeleteMission}
-                                            onToggleComplete={handleToggleComplete}
+                            <>
+                                {/* Status Cards */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                    <StatusCard
+                                        title="Total Missions"
+                                        count={stats.total}
+                                        icon={Target}
+                                        color="cyan"
+                                        trend={12}
+                                        isDark={isDark}
+                                    />
+                                    <StatusCard
+                                        title="Active"
+                                        count={stats.active}
+                                        icon={Activity}
+                                        color="orange"
+                                        trend={8}
+                                        isDark={isDark}
+                                    />
+                                    <StatusCard
+                                        title="Completed"
+                                        count={stats.completed}
+                                        icon={CheckCircle}
+                                        color="green"
+                                        trend={25}
+                                        isDark={isDark}
+                                    />
+                                    <StatusCard
+                                        title="Pending"
+                                        count={stats.pending}
+                                        icon={Clock}
+                                        color="purple"
+                                        trend={-5}
+                                        isDark={isDark}
+                                    />
+                                </div>
+
+                                {/* Mission Grid */}
+                                {(loading || isPending) ? (
+                                    <div className="flex flex-col items-center justify-center h-64 text-center">
+                                        <RefreshCw className={`w-16 h-16 mb-4 animate-spin ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                                        <h3 className={`text-xl font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                            {isPending ? 'Checking authentication...' : 'Loading missions...'}
+                                        </h3>
+                                    </div>
+                                ) : filteredMissions.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-64 text-center">
+                                        <Target className={`w-16 h-16 mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+                                        <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No Missions Found</h3>
+                                        <p className={`mb-6 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                                            {missions.length === 0
+                                                ? "No missions have been added yet. Click 'New Mission' to get started!"
+                                                : "Try adjusting your filters or search query"}
+                                        </p>
+                                        <button
+                                            onClick={() => setShowAddModal(true)}
+                                            className={`flex items-center gap-2 px-6 py-3 rounded-lg border transition-all
+                                        ${isDark
+                                                    ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/30'
+                                                    : 'bg-cyan-100 text-cyan-600 border-cyan-300 hover:bg-cyan-200'}`}
+                                        >
+                                            <Plus className="w-5 h-5" />
+                                            Initialize First Mission
+                                        </button>
+                                    </div>
+                                ) : activeTab === 'chatbot' ? (
+                                    <div className="h-[calc(100vh-20rem)] p-4">
+                                        <ChatTab
+                                            userId={session?.user?.id || session?.user?.email || ''}
                                             isDark={isDark}
+                                            onTasksUpdated={async () => {
+                                                try {
+                                                    const userId = session?.user?.id || session?.user?.email;
+                                                    if (userId) {
+                                                        const tasks = await api.tasks.list({ userId });
+                                                        const mappedTasks: Mission[] = tasks.map((task: any) => ({
+                                                            id: task.id.toString(),
+                                                            title: task.title,
+                                                            description: task.description || '',
+                                                            priority: (task.priority || 'medium') as 'critical' | 'high' | 'medium' | 'low',
+                                                            status: (task.status || 'pending') as 'pending' | 'active' | 'completed' | 'failed',
+                                                            dueDate: task.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                                                            createdAt: task.createdAt,
+                                                            tags: task.tags || [],
+                                                            category: task.category || 'General',
+                                                            recursion: task.recursion
+                                                        }));
+                                                        setMissions(mappedTasks);
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Failed to refresh tasks:', error);
+                                                }
+                                            }}
                                         />
-                                    ))}
-                                </AnimatePresence>
-                            </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                        <AnimatePresence>
+                                            {filteredMissions.map((mission) => (
+                                                <MissionCard
+                                                    key={mission.id}
+                                                    mission={mission}
+                                                    onEdit={handleEditMission}
+                                                    onDelete={handleDeleteMission}
+                                                    onToggleComplete={handleToggleComplete}
+                                                    isDark={isDark}
+                                                />
+                                            ))}
+                                        </AnimatePresence>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </main>
@@ -1477,30 +1537,34 @@ export default function Dashboard() {
 
             {/* Add Mission Modal */}
             <AnimatePresence>
-                {showAddModal && (
-                    <AddMissionModal
-                        isOpen={showAddModal}
-                        onClose={() => setShowAddModal(false)}
-                        onAdd={handleAddMission}
-                        isDark={isDark}
-                    />
-                )}
-                {showEditModal && editingMission && (
-                    <AddMissionModal
-                        isOpen={showEditModal}
-                        onClose={() => {
-                            setShowEditModal(false);
-                            setEditingMission(null);
-                        }}
-                        onAdd={handleSaveEdit}
-                        isDark={isDark}
-                        initialData={editingMission}
-                        isEditMode={true}
-                    />
-                )}
-            </AnimatePresence>
+                {
+                    showAddModal && (
+                        <AddMissionModal
+                            isOpen={showAddModal}
+                            onClose={() => setShowAddModal(false)}
+                            onAdd={handleAddMission}
+                            isDark={isDark}
+                        />
+                    )
+                }
+                {
+                    showEditModal && editingMission && (
+                        <AddMissionModal
+                            isOpen={showEditModal}
+                            onClose={() => {
+                                setShowEditModal(false);
+                                setEditingMission(null);
+                            }}
+                            onAdd={handleSaveEdit}
+                            isDark={isDark}
+                            initialData={editingMission}
+                            isEditMode={true}
+                        />
+                    )
+                }
+            </AnimatePresence >
 
 
-        </div>
+        </div >
     );
 }

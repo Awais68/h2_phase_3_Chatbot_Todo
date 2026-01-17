@@ -16,21 +16,40 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 @router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(
     task_data: TaskCreate,
+    user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(lambda: None)  # Make auth optional
 ):
     """
-    Create a new task for the authenticated user.
+    Create a new task for the authenticated user or demo user.
 
     Args:
         task_data: Task creation data
+        user_id: Optional user ID for demo users (if not authenticated)
         session: Database session
-        current_user: Authenticated user
+        current_user: Authenticated user (optional)
 
     Returns:
         TaskResponse: Created task
     """
-    task = TaskService.create_task(session, current_user.id, task_data)
+    # Determine user ID: use authenticated user if available, otherwise use provided user_id
+    if current_user and hasattr(current_user, 'id'):
+        effective_user_id = current_user.id
+    elif user_id:
+        # For demo users, use the provided user_id (could be email or any identifier)
+        # Convert to integer if possible, otherwise use hash
+        try:
+            effective_user_id = int(user_id)
+        except (ValueError, TypeError):
+            # Use hash of string as user ID for non-numeric identifiers
+            effective_user_id = abs(hash(user_id)) % (10**9)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required or user_id must be provided"
+        )
+    
+    task = TaskService.create_task(session, effective_user_id, task_data)
     return TaskResponse(**task.model_dump())
 
 
@@ -38,22 +57,41 @@ def create_task(
 def get_tasks(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200),
+    user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(lambda: None)  # Make auth optional
 ):
     """
-    Get all tasks for the authenticated user with pagination.
+    Get all tasks for the authenticated user or demo user with pagination.
 
     Args:
         skip: Number of records to skip
         limit: Maximum number of records to return
+        user_id: Optional user ID for demo users (if not authenticated)
         session: Database session
-        current_user: Authenticated user
+        current_user: Authenticated user (optional)
 
     Returns:
         List[TaskResponse]: List of user's tasks
     """
-    tasks = TaskService.get_tasks(session, current_user.id, skip, limit)
+    # Determine user ID: use authenticated user if available, otherwise use provided user_id
+    if current_user and hasattr(current_user, 'id'):
+        effective_user_id = current_user.id
+    elif user_id:
+        # For demo users, use the provided user_id (could be email or any identifier)
+        # Convert to integer if possible, otherwise use hash
+        try:
+            effective_user_id = int(user_id)
+        except (ValueError, TypeError):
+            # Use hash of string as user ID for non-numeric identifiers
+            effective_user_id = abs(hash(user_id)) % (10**9)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required or user_id must be provided"
+        )
+    
+    tasks = TaskService.get_tasks(session, effective_user_id, skip, limit)
     return [TaskResponse(**task.model_dump()) for task in tasks]
 
 

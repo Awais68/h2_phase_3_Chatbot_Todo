@@ -1,0 +1,438 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Todo AI Chatbot MCP Tools",
+  "description": "MCP tool definitions for task management operations. These tools are exposed to the OpenAI agent for natural language task management.",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "add_task",
+      "description": "Create a new task for the user. Use this when the user wants to add, create, remember, or track something they need to do.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "The ID of the user creating the task (required for data isolation)"
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title (1-200 characters). Should be a brief, clear description of what needs to be done.",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional detailed description of the task (max 1000 characters). Use this for additional context or details.",
+            "maxLength": 1000,
+            "default": ""
+          }
+        },
+        "required": ["user_id", "title"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "integer",
+            "description": "Unique identifier for the created task"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "completed"],
+            "description": "Task completion status (always 'pending' for new tasks)"
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title as stored"
+          }
+        }
+      },
+      "examples": [
+        {
+          "input": {
+            "user_id": 123,
+            "title": "Buy groceries",
+            "description": "Milk, eggs, bread, butter"
+          },
+          "output": {
+            "task_id": 789,
+            "status": "pending",
+            "title": "Buy groceries"
+          }
+        },
+        {
+          "input": {
+            "user_id": 123,
+            "title": "Call dentist"
+          },
+          "output": {
+            "task_id": 790,
+            "status": "pending",
+            "title": "Call dentist"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "INVALID_TITLE",
+          "message": "Title must be between 1 and 200 characters",
+          "when": "Title is empty or exceeds 200 characters"
+        },
+        {
+          "code": "INVALID_DESCRIPTION",
+          "message": "Description cannot exceed 1000 characters",
+          "when": "Description exceeds 1000 characters"
+        }
+      ]
+    },
+    {
+      "name": "list_tasks",
+      "description": "Retrieve the user's tasks, optionally filtered by completion status. Use this when the user wants to see, view, list, or check their tasks.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "The ID of the user whose tasks to retrieve"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["all", "pending", "completed"],
+            "description": "Filter tasks by completion status. 'all' returns all tasks, 'pending' returns incomplete tasks, 'completed' returns finished tasks.",
+            "default": "all"
+          }
+        },
+        "required": ["user_id"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "description": "Array of task objects",
+            "items": {
+              "type": "object",
+              "properties": {
+                "task_id": {
+                  "type": "integer",
+                  "description": "Unique task identifier"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Task title"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Task description (may be empty)"
+                },
+                "completed": {
+                  "type": "boolean",
+                  "description": "Completion status"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the task was created (ISO 8601)"
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the task was last updated (ISO 8601)"
+                }
+              }
+            }
+          },
+          "count": {
+            "type": "integer",
+            "description": "Total number of tasks returned"
+          }
+        }
+      },
+      "examples": [
+        {
+          "input": {
+            "user_id": 123,
+            "status": "all"
+          },
+          "output": {
+            "tasks": [
+              {
+                "task_id": 789,
+                "title": "Buy groceries",
+                "description": "Milk, eggs, bread",
+                "completed": false,
+                "created_at": "2026-01-10T10:00:00Z",
+                "updated_at": "2026-01-10T10:00:00Z"
+              },
+              {
+                "task_id": 790,
+                "title": "Call dentist",
+                "description": "",
+                "completed": true,
+                "created_at": "2026-01-09T15:30:00Z",
+                "updated_at": "2026-01-10T09:00:00Z"
+              }
+            ],
+            "count": 2
+          }
+        },
+        {
+          "input": {
+            "user_id": 123,
+            "status": "pending"
+          },
+          "output": {
+            "tasks": [
+              {
+                "task_id": 789,
+                "title": "Buy groceries",
+                "description": "Milk, eggs, bread",
+                "completed": false,
+                "created_at": "2026-01-10T10:00:00Z",
+                "updated_at": "2026-01-10T10:00:00Z"
+              }
+            ],
+            "count": 1
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "name": "complete_task",
+      "description": "Mark a task as complete. Use this when the user indicates they have finished, completed, or done a task.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "The ID of the user who owns the task"
+          },
+          "task_id": {
+            "type": "integer",
+            "description": "The ID of the task to mark as complete"
+          }
+        },
+        "required": ["user_id", "task_id"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "integer",
+            "description": "The ID of the completed task"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["completed"],
+            "description": "New task status (always 'completed')"
+          },
+          "title": {
+            "type": "string",
+            "description": "The task title"
+          }
+        }
+      },
+      "examples": [
+        {
+          "input": {
+            "user_id": 123,
+            "task_id": 789
+          },
+          "output": {
+            "task_id": 789,
+            "status": "completed",
+            "title": "Buy groceries"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "TASK_NOT_FOUND",
+          "message": "Task with ID {task_id} not found",
+          "when": "Task ID does not exist or belongs to different user"
+        },
+        {
+          "code": "ALREADY_COMPLETED",
+          "message": "Task is already marked as completed",
+          "when": "Task is already in completed state"
+        }
+      ]
+    },
+    {
+      "name": "delete_task",
+      "description": "Delete a task permanently. Use this when the user wants to remove, delete, or cancel a task.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "The ID of the user who owns the task"
+          },
+          "task_id": {
+            "type": "integer",
+            "description": "The ID of the task to delete"
+          }
+        },
+        "required": ["user_id", "task_id"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "integer",
+            "description": "The ID of the deleted task"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["deleted"],
+            "description": "Confirmation of deletion"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the deleted task"
+          }
+        }
+      },
+      "examples": [
+        {
+          "input": {
+            "user_id": 123,
+            "task_id": 790
+          },
+          "output": {
+            "task_id": 790,
+            "status": "deleted",
+            "title": "Call dentist"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "TASK_NOT_FOUND",
+          "message": "Task with ID {task_id} not found",
+          "when": "Task ID does not exist or belongs to different user"
+        }
+      ]
+    },
+    {
+      "name": "update_task",
+      "description": "Update a task's title or description. Use this when the user wants to change, update, rename, or modify a task.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "The ID of the user who owns the task"
+          },
+          "task_id": {
+            "type": "integer",
+            "description": "The ID of the task to update"
+          },
+          "title": {
+            "type": "string",
+            "description": "New task title (1-200 characters). Optional - only provide if user wants to change the title.",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "description": "New task description (max 1000 characters). Optional - only provide if user wants to change the description.",
+            "maxLength": 1000
+          }
+        },
+        "required": ["user_id", "task_id"]
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "integer",
+            "description": "The ID of the updated task"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["updated"],
+            "description": "Confirmation of update"
+          },
+          "title": {
+            "type": "string",
+            "description": "The updated task title"
+          },
+          "description": {
+            "type": "string",
+            "description": "The updated task description"
+          }
+        }
+      },
+      "examples": [
+        {
+          "input": {
+            "user_id": 123,
+            "task_id": 789,
+            "title": "Buy groceries and fruits"
+          },
+          "output": {
+            "task_id": 789,
+            "status": "updated",
+            "title": "Buy groceries and fruits",
+            "description": "Milk, eggs, bread"
+          }
+        },
+        {
+          "input": {
+            "user_id": 123,
+            "task_id": 789,
+            "description": "Milk, eggs, bread, butter, apples"
+          },
+          "output": {
+            "task_id": 789,
+            "status": "updated",
+            "title": "Buy groceries",
+            "description": "Milk, eggs, bread, butter, apples"
+          }
+        }
+      ],
+      "errors": [
+        {
+          "code": "TASK_NOT_FOUND",
+          "message": "Task with ID {task_id} not found",
+          "when": "Task ID does not exist or belongs to different user"
+        },
+        {
+          "code": "INVALID_TITLE",
+          "message": "Title must be between 1 and 200 characters",
+          "when": "Title is provided but empty or exceeds 200 characters"
+        },
+        {
+          "code": "INVALID_DESCRIPTION",
+          "message": "Description cannot exceed 1000 characters",
+          "when": "Description is provided but exceeds 1000 characters"
+        },
+        {
+          "code": "NO_CHANGES",
+          "message": "No changes provided - specify title or description to update",
+          "when": "Neither title nor description is provided"
+        }
+      ]
+    }
+  ],
+  "agent_instructions": {
+    "system_prompt": "You are a helpful task management assistant. Users will ask you to manage their todo tasks using natural language. Your capabilities include creating tasks, listing tasks, completing tasks, updating tasks, and deleting tasks. Always confirm actions with friendly messages, ask for clarification if requests are ambiguous, and provide helpful error messages if something fails. Be conversational and natural in your responses.",
+    "intent_patterns": {
+      "add_task": ["add", "create", "remember", "new task", "I need to", "remind me to"],
+      "list_tasks": ["show", "list", "what are", "see tasks", "my tasks", "what do I have"],
+      "complete_task": ["done", "complete", "finished", "mark as done", "I finished"],
+      "delete_task": ["delete", "remove", "cancel", "get rid of"],
+      "update_task": ["change", "update", "rename", "modify", "edit"]
+    },
+    "response_guidelines": [
+      "Always confirm successful operations with a friendly message",
+      "Use status indicators (✓ for success, ✗ for errors)",
+      "Format task lists clearly with numbers or bullets",
+      "Ask clarifying questions when the user's intent is ambiguous",
+      "Provide helpful suggestions when errors occur",
+      "Maintain conversational tone throughout"
+    ]
+  }
+}
