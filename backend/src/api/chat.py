@@ -72,6 +72,14 @@ async def chat_endpoint(
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
     try:
+        # Auto-register user in Neon DB
+        from src.services.user_registration_service import user_registration_service
+        user = user_registration_service.get_or_create_user(
+            session=session,
+            user_id=user_id,
+            email=user_id if '@' in user_id else None
+        )
+        
         # Get or create conversation
         if request.conversation_id:
             conversation = conversation_service.get_conversation(request.conversation_id, session)
