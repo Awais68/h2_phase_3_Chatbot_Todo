@@ -12,7 +12,7 @@ class Task(SQLModel, table=True):
     __tablename__ = "tasks"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id", index=True)
+    user_id: int = Field(index=True)  # Removed foreign_key constraint for demo users
     title: str = Field(max_length=200, min_length=1)
     description: str = Field(default="", max_length=1000)
     completed: bool = Field(default=False)
