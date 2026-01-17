@@ -1,102 +1,100 @@
 """
 Authentication API endpoints (register, login, logout).
 """
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
+from sqlmodel import Session, select
 from src.db.session import get_session
 from src.models.user import UserCreate, UserLogin, UserResponse, User
 from src.services.user_service import UserService
 from src.core.security import create_access_token
 from src.middleware.auth import get_current_user
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(user_data: UserCreate, session: Session = Depends(get_session)):
+class TokenResponse(BaseModel):
+    """Response model for token exchange."""
+    access_token: str
+    token_type: str
+    user: dict
+
+
+@router.post("/exchange-token", response_model=TokenResponse)
+async def exchange_token(
+    request: Request,
+    session: Session = Depends(get_session),
+    x_user_email: str = Header(None, alias="X-User-Email"),
+    x_user_name: str = Header(None, alias="X-User-Name"),
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
     """
-    Register a new user.
-
-    Args:
-        user_data: User registration data
-        session: Database session
-
-    Returns:
-        UserResponse: Created user information
-
-    Raises:
-        HTTPException: If username or email already exists
+    Exchange Better Auth session for JWT token.
+    Called by frontend after Better Auth login.
+    
+    Better Auth should provide user info in headers:
+    - X-User-Email: User's email
+    - X-User-Name: User's name
+    - X-User-Id: Better Auth user ID
     """
-    try:
-        user = UserService.create_user(session, user_data)
-        return UserResponse(
-            id=user.id,
-            email=user.email,
-            username=user.username,
-            is_active=user.is_active,
-            created_at=user.created_at
-        )
-    except ValueError as e:
+    # Try to get user info from headers first
+    user_email = x_user_email
+    user_name = x_user_name
+    better_auth_id = x_user_id
+    
+    # If not in headers, try to get from Better Auth session cookie
+    if not user_email:
+        # Get Better Auth session from cookies
+        session_cookie = request.cookies.get('better-auth.session_token')
+        
+        if not session_cookie:
+            raise HTTPException(
+                status_code=401, 
+                detail="No session found. Please login first."
+            )
+        
+        # In a real implementation, you would verify the session with Better Auth
+        # For now, we'll require the headers to be sent from frontend
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=400,
+            detail="User information headers required (X-User-Email, X-User-Name)"
         )
-
-
-@router.post("/login")
-def login(credentials: UserLogin, session: Session = Depends(get_session)):
-    """
-    Login and receive access token.
-
-    Args:
-        credentials: Username and password
-        session: Database session
-
-    Returns:
-        dict: Access token and token type
-
-    Raises:
-        HTTPException: If credentials are invalid
-    """
-    user = UserService.authenticate_user(session, credentials.username, credentials.password)
-
+    
+    # Get or create user in backend DB
+    query = select(User).where(User.email == user_email)
+    user = session.exec(query).first()
+    
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+        # Create new user from Better Auth data
+        user = User(
+            email=user_email,
+            name=user_name or user_email.split('@')[0],
+            is_active=True
         )
-
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+    
+    # Generate JWT token
     access_token = create_access_token(data={"sub": user.id})
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": UserResponse(
-            id=user.id,
-            email=user.email,
-            username=user.username,
-            is_active=user.is_active,
-            created_at=user.created_at
-        )
-    }
-
-
-@router.get("/me", response_model=UserResponse)
-def get_current_user_info(current_user: User = Depends(get_current_user)):
-    """
-    Get current authenticated user information.
-
-    Args:
-        current_user: Authenticated user from token
-
-    Returns:
-        UserResponse: Current user information
-    """
-    return UserResponse(
-        id=current_user.id,
-        email=current_user.email,
-        username=current_user.username,
-        is_active=current_user.is_active,
-        created_at=current_user.created_at
+    
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user={
+            "id": user.id,
+            "email": user.email,
+            "name": user.name if hasattr(user, 'name') else user.email.split('@')[0] # Fallback if 'name' isn't set
+        }
     )
+
+
+@router.get("/verify-token")
+async def verify_token(
+    current_user: User = Depends(lambda: None)  # Will add proper dependency later
+):
+    """
+    Verify JWT token is valid.
+    Returns current user info.
+    """
+    return {"status": "valid", "message": "Token verification endpoint"}

@@ -54,3 +54,7 @@ ENV/
 .venv
 env.example/
 env.local
+env.production
+env.staging
+env.testing
+__pycache__/

@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@prisma/client": "^7.2.0",
-    "better-auth": "^1.4.10",
-    "prisma": "^7.2.0"
-  }
-}

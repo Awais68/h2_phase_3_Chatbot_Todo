@@ -1,0 +1,254 @@
+openapi: 3.0.3
+info:
+  title: Todo AI Chatbot API
+  description: |
+    RESTful API for the Todo AI Chatbot system. Users interact with tasks through natural language
+    via a single chat endpoint. The backend uses OpenAI Agents SDK to interpret intent and invoke
+    MCP tools for task operations.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.todo-chatbot.example.com
+    description: Production server
+
+tags:
+  - name: chat
+    description: Chat endpoint for natural language task management
+  - name: auth
+    description: Authentication endpoints (Better Auth)
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      tags:
+        - chat
+      summary: Send a chat message
+      description: |
+        Send a natural language message to the AI assistant. The assistant will interpret the intent
+        and perform task operations (create, read, update, delete, complete) as needed.
+
+        The backend maintains conversation history in the database. If no conversation_id is provided,
+        a new conversation is created.
+      operationId: sendChatMessage
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: ID of the authenticated user
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            examples:
+              newConversation:
+                summary: Start new conversation
+                value:
+                  message: "Add a task to buy groceries"
+              existingConversation:
+                summary: Continue existing conversation
+                value:
+                  conversation_id: 456
+                  message: "Show me all my tasks"
+      responses:
+        '200':
+          description: Successful response with assistant's reply
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              examples:
+                taskCreated:
+                  summary: Task created successfully
+                  value:
+                    conversation_id: 456
+                    response: "✓ Task created successfully! I've added 'Buy groceries' to your task list."
+                    tool_calls:
+                      - tool: "add_task"
+                        arguments:
+                          user_id: 123
+                          title: "Buy groceries"
+                          description: ""
+                        result:
+                          task_id: 789
+                          status: "pending"
+                          title: "Buy groceries"
+                tasksList:
+                  summary: Tasks listed
+                  value:
+                    conversation_id: 456
+                    response: "You have 3 tasks:\n1. Buy groceries (pending)\n2. Call dentist (pending)\n3. Finish report (completed)"
+                    tool_calls:
+                      - tool: "list_tasks"
+                        arguments:
+                          user_id: 123
+                          status: "all"
+                        result:
+                          tasks:
+                            - task_id: 789
+                              title: "Buy groceries"
+                              completed: false
+                            - task_id: 790
+                              title: "Call dentist"
+                              completed: false
+                            - task_id: 791
+                              title: "Finish report"
+                              completed: true
+        '400':
+          description: Bad request (invalid input)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emptyMessage:
+                  summary: Empty message
+                  value:
+                    error: "Message cannot be empty"
+                    code: "INVALID_INPUT"
+        '401':
+          description: Unauthorized (not authenticated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Authentication required"
+                code: "UNAUTHORIZED"
+        '403':
+          description: Forbidden (user_id mismatch)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "You can only access your own data"
+                code: "FORBIDDEN"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Something went wrong. Please try again."
+                code: "INTERNAL_ERROR"
+      security:
+        - BetterAuth: []
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        conversation_id:
+          type: integer
+          description: |
+            Optional ID of existing conversation. If not provided, a new conversation is created.
+          example: 456
+        message:
+          type: string
+          description: User's natural language message
+          minLength: 1
+          maxLength: 10000
+          example: "Add a task to buy groceries"
+
+    ChatResponse:
+      type: object
+      required:
+        - conversation_id
+        - response
+        - tool_calls
+      properties:
+        conversation_id:
+          type: integer
+          description: ID of the conversation (new or existing)
+          example: 456
+        response:
+          type: string
+          description: Assistant's natural language response
+          example: "✓ Task created successfully! I've added 'Buy groceries' to your task list."
+        tool_calls:
+          type: array
+          description: List of MCP tools invoked during this request
+          items:
+            $ref: '#/components/schemas/ToolCall'
+
+    ToolCall:
+      type: object
+      required:
+        - tool
+        - arguments
+        - result
+      properties:
+        tool:
+          type: string
+          description: Name of the MCP tool invoked
+          enum:
+            - add_task
+            - list_tasks
+            - complete_task
+            - delete_task
+            - update_task
+          example: "add_task"
+        arguments:
+          type: object
+          description: Arguments passed to the tool
+          example:
+            user_id: 123
+            title: "Buy groceries"
+            description: ""
+        result:
+          type: object
+          description: Result returned by the tool
+          example:
+            task_id: 789
+            status: "pending"
+            title: "Buy groceries"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Message cannot be empty"
+        code:
+          type: string
+          description: Machine-readable error code
+          enum:
+            - INVALID_INPUT
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - NOT_FOUND
+            - INTERNAL_ERROR
+          example: "INVALID_INPUT"
+        details:
+          type: object
+          description: Optional additional error details
+          additionalProperties: true
+
+  securitySchemes:
+    BetterAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Better Auth JWT token. Include in Authorization header as: Bearer <token>
+
+security:
+  - BetterAuth: []

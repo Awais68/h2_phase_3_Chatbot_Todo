@@ -10,12 +10,6 @@ interface VoiceCommandButtonProps {
 }
 
 // Add type declarations for Speech Recognition
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition
-    webkitSpeechRecognition: typeof SpeechRecognition
-  }
-}
 
 export default function VoiceCommandButton({ onCommand, size = 'md' }: VoiceCommandButtonProps) {
   const [isListening, setIsListening] = useState(false)
@@ -23,8 +17,10 @@ export default function VoiceCommandButton({ onCommand, size = 'md' }: VoiceComm
   const [transcript, setTranscript] = useState('')
   const [feedback, setFeedback] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [autoSendCountdown, setAutoSendCountdown] = useState<number | null>(null)
 
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const autoSendTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Store callback in ref to avoid stale closures
   const onCommandRef = useRef(onCommand)
@@ -32,6 +28,15 @@ export default function VoiceCommandButton({ onCommand, size = 'md' }: VoiceComm
   useEffect(() => {
     onCommandRef.current = onCommand
   }, [onCommand])
+
+  // Cleanup auto-send timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSendTimerRef.current) {
+        clearTimeout(autoSendTimerRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     // Check for browser support
@@ -42,7 +47,7 @@ export default function VoiceCommandButton({ onCommand, size = 'md' }: VoiceComm
       return
     }
 
-    const recognition = new SpeechRecognition()
+    const recognition: any = new (window.SpeechRecognition || window.webkitSpeechRecognition)()
     recognition.continuous = false
     recognition.interimResults = true
     recognition.lang = 'en-US'
@@ -53,9 +58,14 @@ export default function VoiceCommandButton({ onCommand, size = 'md' }: VoiceComm
       setTranscript('')
       setError(null)
       setFeedback('')
+      setAutoSendCountdown(null)
+      // Clear any existing timer
+      if (autoSendTimerRef.current) {
+        clearTimeout(autoSendTimerRef.current)
+      }
     }
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       const current = event.resultIndex
       const result = event.results[current]
       const transcriptText = result[0].transcript
@@ -64,24 +74,52 @@ export default function VoiceCommandButton({ onCommand, size = 'md' }: VoiceComm
       setTranscript(transcriptText)
 
       if (result.isFinal) {
-        // Use ref to get latest callback
-        const wasHandled = onCommandRef.current(transcriptText)
-        console.log('Command handled:', wasHandled)
+        // Start auto-send countdown (3 seconds)
+        setAutoSendCountdown(3)
 
-        // Provide feedback
-        if (wasHandled) {
-          setFeedback('✓ Command executed!')
-          speak('Mission initialized successfully')
-        } else {
-          setFeedback('Command recognized')
-          speak('Processing command')
+        // Clear any existing timer
+        if (autoSendTimerRef.current) {
+          clearTimeout(autoSendTimerRef.current)
         }
+
+        // Countdown animation
+        let countdown = 3
+        const countdownInterval = setInterval(() => {
+          countdown -= 1
+          setAutoSendCountdown(countdown)
+          if (countdown <= 0) {
+            clearInterval(countdownInterval)
+          }
+        }, 1000)
+
+        // Auto-send after 3 seconds
+        autoSendTimerRef.current = setTimeout(() => {
+          console.log('Auto-sending command:', transcriptText)
+          // Use ref to get latest callback
+          const wasHandled = onCommandRef.current(transcriptText)
+          console.log('Command handled:', wasHandled)
+
+          // Provide feedback
+          if (wasHandled) {
+            setFeedback('✓ Command executed!')
+            speak('Mission initialized successfully')
+          } else {
+            setFeedback('Command recognized')
+            speak('Processing command')
+          }
+
+          setAutoSendCountdown(null)
+        }, 3000)
       }
     }
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error)
       setIsListening(false)
+      setAutoSendCountdown(null)
+      if (autoSendTimerRef.current) {
+        clearTimeout(autoSendTimerRef.current)
+      }
       if (event.error === 'not-allowed') {
         setError('Microphone access denied - please allow microphone')
       } else if (event.error === 'no-speech') {
@@ -189,7 +227,7 @@ export default function VoiceCommandButton({ onCommand, size = 'md' }: VoiceComm
 
       {/* Feedback Overlay */}
       <AnimatePresence>
-        {(isListening || error || feedback) && (
+        {(isListening || error || feedback || autoSendCountdown !== null) && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -212,12 +250,31 @@ export default function VoiceCommandButton({ onCommand, size = 'md' }: VoiceComm
                     &quot;{transcript}&quot;
                   </p>
                 )}
+                {autoSendCountdown !== null && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="flex-1 h-1 bg-secondary rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-purple-500 to-violet-600"
+                        initial={{ width: '100%' }}
+                        animate={{ width: '0%' }}
+                        transition={{ duration: 3, ease: 'linear' }}
+                      />
+                    </div>
+                    <span className="font-mono text-xs text-purple-500 font-bold">
+                      {autoSendCountdown}s
+                    </span>
+                  </div>
+                )}
                 {feedback && (
                   <p className="font-mono text-xs text-success mt-2">
                     {feedback}
                   </p>
                 )}
               </>
+            ) : feedback ? (
+              <div className="flex items-center gap-2 text-green-500 text-sm">
+                <span className="font-mono">{feedback}</span>
+              </div>
             ) : null}
           </motion.div>
         )}
