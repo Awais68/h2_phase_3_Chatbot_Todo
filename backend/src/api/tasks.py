@@ -128,8 +128,9 @@ def get_task(
 def update_task(
     task_id: int,
     task_data: TaskUpdate,
+    user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(lambda: None)  # Make auth optional
 ):
     """
     Update a task.
@@ -137,8 +138,9 @@ def update_task(
     Args:
         task_id: Task ID to update
         task_data: Updated task data
+        user_id: Optional user ID for demo users (if not authenticated)
         session: Database session
-        current_user: Authenticated user
+        current_user: Authenticated user (optional)
 
     Returns:
         TaskResponse: Updated task
@@ -146,7 +148,21 @@ def update_task(
     Raises:
         HTTPException: If task not found or doesn't belong to user
     """
-    task = TaskService.update_task(session, task_id, current_user.id, task_data)
+    # Determine user ID: use authenticated user if available, otherwise use provided user_id
+    if current_user and hasattr(current_user, 'id'):
+        effective_user_id = current_user.id
+    elif user_id:
+        try:
+            effective_user_id = int(user_id)
+        except (ValueError, TypeError):
+            effective_user_id = abs(hash(user_id)) % (10**9)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required or user_id must be provided"
+        )
+    
+    task = TaskService.update_task(session, task_id, effective_user_id, task_data)
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -158,21 +174,37 @@ def update_task(
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(
     task_id: int,
+    user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(lambda: None)  # Make auth optional
 ):
     """
     Delete a task.
 
     Args:
         task_id: Task ID to delete
+        user_id: Optional user ID for demo users (if not authenticated)
         session: Database session
-        current_user: Authenticated user
+        current_user: Authenticated user (optional)
 
     Raises:
         HTTPException: If task not found or doesn't belong to user
     """
-    deleted = TaskService.delete_task(session, task_id, current_user.id)
+    # Determine user ID: use authenticated user if available, otherwise use provided user_id
+    if current_user and hasattr(current_user, 'id'):
+        effective_user_id = current_user.id
+    elif user_id:
+        try:
+            effective_user_id = int(user_id)
+        except (ValueError, TypeError):
+            effective_user_id = abs(hash(user_id)) % (10**9)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required or user_id must be provided"
+        )
+    
+    deleted = TaskService.delete_task(session, task_id, effective_user_id)
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
