@@ -1,0 +1,70 @@
+services:
+  python-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: python-backend
+    restart: unless-stopped
+    init: true
+    # env_file: ./backend/.env  # Uncomment if .env file exists
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres-db
+    networks:
+      - app-network
+    healthcheck:
+      # Healthcheck endpoint as defined in Dockerfile
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  typescript-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: typescript-frontend
+    restart: unless-stopped
+    init: true
+    # env_file: ./frontend/.env  # Uncomment if .env file exists
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    depends_on:
+      - python-backend
+    # Next.js app will connect to backend via API
+
+  postgres-db:
+    image: postgres:latest
+    container_name: postgres-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: todo_db
+      POSTGRES_USER: todo_user
+      POSTGRES_PASSWORD: todo_pass
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # Uncomment the following line to persist data locally
+    # volumes:
+    #   - ./postgres-data:/var/lib/postgresql/data
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    # Use a named volume for PostgreSQL persistence

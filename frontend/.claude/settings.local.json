@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x /media/data/hackathon series/hackathon-2/phase-3 chatbot_todo/frontend/init-auth.sh)",
+      "Bash(chmod +x /media/data/hackathon series/hackathon-2/phase-3 chatbot_todo/frontend/setup-auth.sh)",
+      "Bash(npm test)",
+      "Bash(npm install --save-dev jsdom)",
+      "Bash(npx playwright test --list)",
+      "Bash(npx playwright install --with-deps)",
+      "Bash(npm run build)",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(cd /media/data/hackathon series/hackathon-2/phase-3 chatbot_todo/backend)",
+      "Bash(PORT=3001 npm run dev)",
+      "Bash(lsof -i :3001)",
+      "Bash(PORT=3002 npm run dev)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(timeout 30s cd /media/data/hackathon series/hackathon-2/phase-3 chatbot_todo/frontend)",
+      "Bash(timeout 30s bash -c 'PORT=3002 npm run dev')",
+      "Bash(PORT=3005 npm run dev)",
+      "Bash(curl -s http://localhost:3005/api/health)"
+    ]
+  }
+}

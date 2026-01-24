@@ -1,0 +1,97 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+
+# Go
+/vendor/
+*.test
+.go-cache/
+
+# Java
+target/
+*.class
+.gradle/
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build outputs
+dist/
+build/
+out/
+
+# Test files and directories
+test/
+tests/
+
+# Debug and log files
+debug/
+*.log
+
+# Version control
+.git/
+.gitignore
+.svn/
+.hg/
+
+# Environment and secrets
+.env
+.env.*
+*.env
+# But allow specific environment files for build-time environment variables
+!.env.local
+!.env.production
+*.pem
+*.key
+*.crt
+config.local.*
+*.local.yml
+
+# Project-specific patterns
+# Documentation
+docs/
+*.md
+README*
+
+# Docker files
+Dockerfile*
+docker-compose*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Local development
+.local/
+local/
+
+# Backup and temp artifacts
+*.bak
+*.broken.backup
+
+# Next.js build output
+.next/
+
+# Prisma database (ignore dev.db, keep schema.prisma)
+prisma/dev.db
+
+# Miscellaneous
+*.db
+
+# Exclude lock files and build scripts (explicitly NOT ignored)
+# (Do not add patterns for *.lock, .mvnw, .gradlew, .mvn/, .gradle/)
+
+# Public assets (keep public/, but ignore main.py in public/ if not needed)
+public/main.py

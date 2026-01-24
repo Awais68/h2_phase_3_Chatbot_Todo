@@ -2,21 +2,40 @@
 Task CRUD API endpoints.
 """
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Header
 from sqlmodel import Session
 from src.db.session import get_session
 from src.models.task import TaskCreate, TaskUpdate, TaskResponse, Task
 from src.models.user import User
 from src.services.task_service import TaskService
+from src.services.user_registration_service import user_registration_service
 from src.middleware.auth import get_current_user
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+
+def get_or_create_backend_user(
+    session: Session,
+    user_id: str,
+    user_email: str = None,
+    user_name: str = None
+) -> int:
+    """Get or create backend user from Better Auth user info, returns integer user ID."""
+    user = user_registration_service.get_or_create_user(
+        session=session,
+        user_id=user_id,
+        email=user_email,
+        name=user_name
+    )
+    return user.id
 
 
 @router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(
     task_data: TaskCreate,
     user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
+    x_user_email: str = Header(None, alias="X-User-Email"),
+    x_user_name: str = Header(None, alias="X-User-Name"),
     session: Session = Depends(get_session),
     current_user: User = Depends(lambda: None)  # Make auth optional
 ):
@@ -26,6 +45,8 @@ def create_task(
     Args:
         task_data: Task creation data
         user_id: Optional user ID for demo users (if not authenticated)
+        x_user_email: User email from Better Auth (header)
+        x_user_name: User name from Better Auth (header)
         session: Database session
         current_user: Authenticated user (optional)
 
@@ -36,13 +57,13 @@ def create_task(
     if current_user and hasattr(current_user, 'id'):
         effective_user_id = current_user.id
     elif user_id:
-        # For demo users, use the provided user_id (could be email or any identifier)
-        # Convert to integer if possible, otherwise use hash
-        try:
-            effective_user_id = int(user_id)
-        except (ValueError, TypeError):
-            # Use hash of string as user ID for non-numeric identifiers
-            effective_user_id = abs(hash(user_id)) % (10**9)
+        # Auto-register Better Auth user and get backend integer ID
+        effective_user_id = get_or_create_backend_user(
+            session=session,
+            user_id=user_id,
+            user_email=x_user_email,
+            user_name=x_user_name
+        )
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -58,6 +79,8 @@ def get_tasks(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200),
     user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
+    x_user_email: str = Header(None, alias="X-User-Email"),
+    x_user_name: str = Header(None, alias="X-User-Name"),
     session: Session = Depends(get_session),
     current_user: User = Depends(lambda: None)  # Make auth optional
 ):
@@ -68,6 +91,8 @@ def get_tasks(
         skip: Number of records to skip
         limit: Maximum number of records to return
         user_id: Optional user ID for demo users (if not authenticated)
+        x_user_email: User email from Better Auth (header)
+        x_user_name: User name from Better Auth (header)
         session: Database session
         current_user: Authenticated user (optional)
 
@@ -78,13 +103,13 @@ def get_tasks(
     if current_user and hasattr(current_user, 'id'):
         effective_user_id = current_user.id
     elif user_id:
-        # For demo users, use the provided user_id (could be email or any identifier)
-        # Convert to integer if possible, otherwise use hash
-        try:
-            effective_user_id = int(user_id)
-        except (ValueError, TypeError):
-            # Use hash of string as user ID for non-numeric identifiers
-            effective_user_id = abs(hash(user_id)) % (10**9)
+        # Auto-register Better Auth user and get backend integer ID
+        effective_user_id = get_or_create_backend_user(
+            session=session,
+            user_id=user_id,
+            user_email=x_user_email,
+            user_name=x_user_name
+        )
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

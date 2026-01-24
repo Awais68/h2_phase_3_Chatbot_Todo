@@ -1,0 +1,87 @@
+# --- Version control ---
+.git/
+.gitignore
+.svn/
+.hg/
+
+# --- Python artifacts ---
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+.mypy_cache/
+
+# --- Node.js artifacts ---
+node_modules/
+npm-debug.log
+yarn-debug.log
+.next/
+
+# --- Build outputs ---
+dist/
+build/
+out/
+
+# --- IDE/editor files ---
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- Test and debug files ---
+test/
+tests/
+*_test.go
+debug/
+*.log
+
+# --- Environment and secrets ---
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.crt
+config.local.*
+*.local.yml
+settings.local.json
+
+# --- Project-specific patterns ---
+docs/
+README*
+*.md
+Dockerfile*
+docker-compose*
+*.bak
+
+# --- Temporary and cache files ---
+tmp/
+temp/
+*.tmp
+
+# --- Local development ---
+.local/
+local/
+
+# --- Coverage and reports ---
+htmlcov/
+
+# --- Miscellaneous ---
+CACHEDIR.TAG
+
+# --- Service-specific ---
+# Backend Python venv
+.venv/
+backend/.venv/
+frontend/.venv/
+
+# Frontend build cache
+frontend/.next/
+frontend/node_modules/
+
+# Ignore backup files
+*~
+*.backup
+
+# --- End of .dockerignore ---
