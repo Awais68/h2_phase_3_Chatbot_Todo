@@ -5,10 +5,6 @@
 # =========================
 FROM python:3.13-slim AS base
 
-# Install curl for healthchecks
-RUN apt-get update && apt-get install -y --no-install-recommends curl && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # =========================
 # Builder stage
 # =========================
@@ -17,7 +13,7 @@ FROM base AS builder
 WORKDIR /app
 
 # Install uv (fast Python package manager) from official container
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Copy dependency files first for better cache utilization
 COPY --link pyproject.toml ./
@@ -27,9 +23,7 @@ COPY --link uv.lock ./
 ENV UV_CACHE_DIR=/root/.cache/uv
 RUN --mount=type=cache,target=$UV_CACHE_DIR \
     uv venv /app/.venv && \
-    . /app/.venv/bin/activate && \
-    pip install --upgrade pip && \
-    uv pip install --no-cache --compile -r pyproject.toml
+    uv pip install --system --no-cache --compile -r pyproject.toml
 
 # =========================
 # Final image
@@ -57,9 +51,6 @@ ENV PATH="/app/.venv/bin:$PATH" \
 # Switch to non-root user
 USER appuser
 
-# Set working directory for the user
-WORKDIR /app
-
 # Expose port
 EXPOSE 8000
 
@@ -68,8 +59,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 # Start the application (PORT can be overridden at runtime)
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
-
-
-
-
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "${PORT}"]

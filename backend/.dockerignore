@@ -1,83 +1,86 @@
-# ============================================
-# Docker Ignore File
-# Excludes files from Docker build context
-# ============================================
-
-# Git
-.git
-.gitignore
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Python
+# Python bytecode and cache
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual Environment
-venv/
-env/
-ENV/
-.venv
-
-# Testing
+*.pyc
+*.pyo
+*.pyd
 .pytest_cache/
 .coverage
-htmlcov/
-.tox/
 
-# Logs
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE/editor settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build and distribution outputs
+dist/
+build/
+out/
+
+# Test directories and files
+test/
+tests/
+*_test.py
+
+# Debug and log files
+debug/
 *.log
-logs/
 
-# Environment files (contain secrets)
+# Version control
+.git/
+.gitignore
+.svn/
+.hg/
+
+# Environment and secrets
 .env
-.env.local
-.env.*.local
+.env.*
+*.env
+*.pem
+*.key
+*.crt
 
-# Application Data
-*.sqlite
-*.sqlite3
-tasks.json
+# Local and development config
+*.local.*
+config.local.*
+settings.local.*
+.local/
+local/
 
-# Documentation (optional - reduces image size)
-README.md
+# Documentation and markdown
 README*
-docs/
 *.md
+docs/
 
-# CI/CD
-.github/
-.gitlab-ci.yml
-.travis.yml
-
-# Docker
+# Docker and Compose files
+.dockerignore
 Dockerfile*
-docker-compose*.yml
-.docker/
+docker-compose*
+
+# Temporary and backup files
+tmp/
+temp/
+*.tmp
+*.backup
+
+# Project-specific: backup and migration versions
+backup/
+migrations/versions/
+src/db/migrations/versions/
+
+# Ignore empty __init__.py files (optional, if not needed)
+# src/**/__init__.py
+
+# Ignore mako templates (if not needed in build)
+*.mako
+
+# Ignore miscellaneous
+*.txt
+*.json
+
+# Exclude nothing else; keep all source code and necessary configs

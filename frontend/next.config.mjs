@@ -5,6 +5,8 @@ const nextConfig = {
   // Enable React strict mode
   reactStrictMode: true,
 
+  output: "standalone",
+
   // Compress images
   images: {
     formats: ["image/avif", "image/webp"],

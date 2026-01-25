@@ -2,8 +2,8 @@
 
 echo "🔧 Setting up better-auth with Prisma..."
 
-# Navigate to frontend directory
-cd "/media/data/hackathon series/hackathon-2/phase-ii_Web_App_Full Stack/frontend"
+# Navigate to current directory (where the script is located)
+cd "$(dirname "$0")"
 
 # Install correct Prisma versions
 echo "📦 Installing Prisma 5..."
