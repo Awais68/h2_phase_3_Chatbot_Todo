@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(docker --version)",
+      "Bash(docker build -t todo-ai-chatbot-backend .)",
+      "Bash(docker-compose -f compose.yaml up -d)",
+      "Bash(docker compose -f compose.yaml up -d)",
+      "Bash(docker logs python-app)",
+      "Bash(docker compose -f compose.yaml down)",
+      "Bash(docker run -it --rm todo-ai-chatbot-backend /bin/bash -c \"echo $PATH && ls -la /app/.venv/bin/ | grep uvicorn\")",
+      "Bash(docker run --rm todo-ai-chatbot-backend printenv PATH)",
+      "Bash(docker run --rm todo-ai-chatbot-backend ls -la /app/.venv/bin/)",
+      "Bash(docker run --rm todo-ai-chatbot-backend ls /app/.venv/bin/)",
+      "Bash(docker run --rm -u 1000:1000 todo-ai-chatbot-backend /app/.venv/bin/python -m pip list)",
+      "Bash(docker run --rm todo-ai-chatbot-backend /app/.venv/bin/pip list)",
+      "Bash(docker run --rm todo-ai-chatbot-backend ls /app/.venv/lib/python*/site-packages/)",
+      "Bash(docker run --rm todo-ai-chatbot-backend ls -la /app/.venv/lib/)",
+      "Bash(docker compose -f compose.yaml up -d --build)",
+      "Bash(curl http://localhost:8000/health)",
+      "Bash(curl http://localhost:8000/)",
+      "Bash(docker build -t todo-frontend .)",
+      "Bash(docker stop sharp_heyrovsky)",
+      "Bash(docker rm sharp_heyrovsky)",
+      "Bash(docker run -d --name todo-frontend-container -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://localhost:8000 todo-frontend)",
+      "Bash(curl -X POST http://localhost:8000/api/demo/chat -H \"Content-Type: application/json\" -d '{\"\"message\"\": \"\"test\"\"}')",
+      "Bash(curl -I http://localhost:3000)",
+      "Bash(docker exec -it todo-frontend-container env)",
+      "Bash(docker exec todo-frontend-container printenv)",
+      "Bash(docker stop todo-frontend-container)",
+      "Bash(docker rm todo-frontend-container)",
+      "Bash(docker run -d --name todo-frontend-container -p 3000:3000 todo-frontend)",
+      "Bash(docker logs todo-frontend-container)",
+      "Bash(curl -X POST http://localhost:8000/api/demo/chat -H \"Content-Type: application/json\" -d '{\"\"message\"\": \"\"hello\"\"}')",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s http://localhost:3000/chatbot)",
+      "Bash(curl -s http://localhost:3000/dashboard)",
+      "Bash(curl -H \"Content-Type: application/json\" -X POST http://localhost:8000/api/demo/chat -d '{\"\"message\"\": \"\"test message\"\"}')"
+    ]
+  }
+}

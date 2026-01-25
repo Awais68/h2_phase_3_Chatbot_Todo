@@ -1,0 +1,30 @@
+services:
+  ts-app:
+    container_name: ts-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+
+    # Docker Compose Watch - syncs files from host to container
+    develop:
+      watch:
+        # Sync source files (triggers Next.js hot-reload)
+        - action: sync
+          path: ./app
+          target: /app/app
+          ignore:
+            - node_modules/
+    # env_file: ./.env  # Uncomment if .env file exists
+    ports:
+      - "3000:3000" # Next.js app exposed on port 3000
+    networks:
+      - appnet
+    # If you add a database service, add depends_on here
+
+# No database or external service detected in documentation or codebase.
+
+networks:
+  appnet:
+    driver: bridge

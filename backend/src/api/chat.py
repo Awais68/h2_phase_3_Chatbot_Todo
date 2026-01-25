@@ -64,26 +64,34 @@ async def chat_endpoint(
     Returns:
         ChatResponse with conversation_id, response, and tool_calls
     """
-    # Convert user_id to integer for database
-    user_id_int = user_id_to_int(user_id)
-    
     # Validate message
     if not request.message or not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
     try:
+        # Auto-register user in Neon DB and get the ACTUAL backend user ID
+        from src.services.user_registration_service import user_registration_service
+        user = user_registration_service.get_or_create_user(
+            session=session,
+            user_id=user_id,
+            email=user_id if '@' in user_id else None
+        )
+        
+        # Use the actual backend user ID for all operations
+        backend_user_id = user.id
+        
         # Get or create conversation
         if request.conversation_id:
             conversation = conversation_service.get_conversation(request.conversation_id, session)
-            if not conversation or conversation.user_id != user_id_int:
+            if not conversation or conversation.user_id != backend_user_id:
                 raise HTTPException(status_code=404, detail="Conversation not found")
         else:
-            conversation = conversation_service.create_conversation(user_id_int, session)
+            conversation = conversation_service.create_conversation(backend_user_id, session)
 
         # Store user message
         conversation_service.store_message(
             conversation_id=conversation.id,
-            user_id=user_id_int,
+            user_id=backend_user_id,
             role="user",
             content=request.message,
             session=session
@@ -93,10 +101,10 @@ async def chat_endpoint(
         history = conversation_service.get_history(conversation.id, session)
         messages = conversation_service.format_history_for_agent(history)
 
-        # Run agent (use original user_id string for agent service)
+        # Run agent with the actual backend user ID
         result = agent_service.run_agent(
             messages=messages,
-            user_id=user_id_int,  # Agent service also expects int for tool execution
+            user_id=backend_user_id,  # Use actual backend user ID for task creation
             session=session
         )
 
@@ -104,7 +112,7 @@ async def chat_endpoint(
         if result["response"]:
             conversation_service.store_message(
                 conversation_id=conversation.id,
-                user_id=user_id_int,
+                user_id=backend_user_id,
                 role="assistant",
                 content=result["response"],
                 session=session

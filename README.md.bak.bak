@@ -1,0 +1,80 @@
+## Running the Project with Docker
+
+This project provides a complete Docker-based setup for local development and deployment, using Docker Compose to orchestrate the backend (Python), frontend (Next.js/TypeScript), and PostgreSQL database services.
+
+### Project-Specific Requirements
+
+- **Backend (Python):**
+  - Uses Python 3.13-slim as the base image.
+  - Dependency management via `uv` and `pyproject.toml`/`uv.lock`.
+  - Exposes port **8000**.
+  - Healthcheck endpoint at `/health`.
+  - Non-root user (`appuser`) for security.
+
+- **Frontend (Next.js/TypeScript):**
+  - Uses Node.js version **22.13.1-slim** (set via `NODE_VERSION` ARG).
+  - Exposes port **3000**.
+  - Non-root user (`appuser`).
+  - Production build removes dev dependencies.
+
+- **Database (PostgreSQL):**
+  - Uses the official `postgres:latest` image.
+  - Exposes port **5432**.
+  - Database credentials and name are set via environment variables (see below).
+  - Data persistence via named volume `postgres-data` (can be mapped to a local directory if needed).
+
+### Required Environment Variables
+
+- **Backend:**
+  - `PORT` (default: 8000)
+  - Additional environment variables can be set via `.env` file in `./backend` (uncomment `env_file` in compose if used).
+
+- **Frontend:**
+  - `PORT` (default: 3000)
+  - Additional environment variables can be set via `.env` file in `./frontend` (uncomment `env_file` in compose if used).
+
+- **PostgreSQL:**
+  - `POSTGRES_DB=todo_db`
+  - `POSTGRES_USER=todo_user`
+  - `POSTGRES_PASSWORD=todo_pass`
+
+### Build and Run Instructions
+
+1. **Clone the repository and ensure Docker and Docker Compose are installed.**
+2. **(Optional) Create `.env` files for backend and frontend if you need to override defaults.**
+3. **Build and start all services:**
+   ```sh
+   docker compose up --build
+   ```
+   This will build and start:
+   - Backend (Python) on port **8000**
+   - Frontend (Next.js) on port **3000**
+   - PostgreSQL on port **5432**
+
+4. **Access the application:**
+   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - Backend API: [http://localhost:8000](http://localhost:8000)
+
+### Special Configuration Notes
+
+- **Healthchecks:**
+  - Backend: `/health` endpoint is used for container health.
+  - Database: Uses `pg_isready` for health.
+- **User Security:** All services run as non-root users for improved security.
+- **Volumes:** PostgreSQL data is persisted in a named volume (`postgres-data`). Uncomment the volume mapping in `docker-compose.yaml` to persist data locally.
+- **Network:** All services are connected via the `app-network` bridge network.
+- **Dependencies:**
+  - Backend dependencies are managed with `uv` (fast Python package manager).
+  - Frontend dependencies are installed with `npm ci` and pruned for production.
+
+### Ports Summary
+
+| Service              | Port |
+|----------------------|------|
+| Python Backend       | 8000 |
+| Next.js Frontend     | 3000 |
+| PostgreSQL Database  | 5432 |
+
+---
+
+*This section was updated to reflect the current Docker setup for this project. For further details, see the individual Dockerfiles and `docker-compose.yaml`.*

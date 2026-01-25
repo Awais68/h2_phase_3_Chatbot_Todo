@@ -675,7 +675,7 @@ export default function Dashboard() {
                     }
                 }
 
-                const userId = session?.user?.id || session?.user?.email;
+                const userId = session?.user?.email || session?.user?.id;
 
                 if (!userId) {
                     console.error('No userId found in session');
@@ -683,7 +683,9 @@ export default function Dashboard() {
                     return;
                 }
 
-                const tasks = await api.tasks.list({ userId });
+                const userEmail = session?.user?.email;
+                const userName = session?.user?.name;
+                const tasks = await api.tasks.list({ userId, userEmail, userName });
 
                 // Map backend tasks to Mission format
                 const mappedTasks: Mission[] = tasks.map((task: any) => ({
@@ -784,8 +786,10 @@ export default function Dashboard() {
     // Add new mission
     const handleAddMission = useCallback(async (missionData: Omit<Mission, 'id' | 'createdAt'>) => {
         try {
-            // Get user ID from session
-            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+            // Get user info from session
+            const userId = session?.user?.email || session?.user?.id || 'anonymous';
+            const userEmail = session?.user?.email;
+            const userName = session?.user?.name;
 
             // Create task in backend with all fields
             const task = await api.tasks.create({
@@ -797,7 +801,9 @@ export default function Dashboard() {
                 recursion: missionData.recursion,
                 category: missionData.category,
                 tags: missionData.tags,
-                userId: userId
+                userId: userId,
+                userEmail: userEmail,
+                userName: userName
             });
 
             // Add to local state
@@ -1389,13 +1395,15 @@ export default function Dashboard() {
                         {activeTab === 'chatbot' ? (
                             <div className="h-[calc(100vh-12rem)]">
                                 <ChatTab
-                                    userId={session?.user?.id || session?.user?.email || ''}
+                                    userId={session?.user?.email || session?.user?.id || ''}
                                     isDark={isDark}
                                     onTasksUpdated={async () => {
                                         try {
-                                            const userId = session?.user?.id || session?.user?.email;
+                                            const userId = session?.user?.email || session?.user?.id;
+                                            const userEmail = session?.user?.email;
+                                            const userName = session?.user?.name;
                                             if (userId) {
-                                                const tasks = await api.tasks.list({ userId });
+                                                const tasks = await api.tasks.list({ userId, userEmail, userName });
                                                 const mappedTasks: Mission[] = tasks.map((task: any) => ({
                                                     id: task.id.toString(),
                                                     title: task.title,
@@ -1485,13 +1493,15 @@ export default function Dashboard() {
                                 ) : activeTab === 'chatbot' ? (
                                     <div className="h-[calc(100vh-20rem)] p-4">
                                         <ChatTab
-                                            userId={session?.user?.id || session?.user?.email || ''}
+                                            userId={session?.user?.email || session?.user?.id || ''}
                                             isDark={isDark}
                                             onTasksUpdated={async () => {
                                                 try {
-                                                    const userId = session?.user?.id || session?.user?.email;
+                                                    const userId = session?.user?.email || session?.user?.id;
+                                                    const userEmail = session?.user?.email;
+                                                    const userName = session?.user?.name;
                                                     if (userId) {
-                                                        const tasks = await api.tasks.list({ userId });
+                                                        const tasks = await api.tasks.list({ userId, userEmail, userName });
                                                         const mappedTasks: Mission[] = tasks.map((task: any) => ({
                                                             id: task.id.toString(),
                                                             title: task.title,
