@@ -1,8 +1,8 @@
 # Quick Start: Deploy Todo AI Chatbot
 
-## Using Your Hugging Face Token: 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
+## Using Your Hugging Face Token
 
-Your Hugging Face token has been received. Here's how to deploy your application:
+Store your Hugging Face token in Space secrets (do not commit tokens). Here's how to deploy your application:
 
 ## Step 1: Prepare the Backend for Hugging Face Spaces
 
@@ -37,7 +37,7 @@ In your Space settings, add these secrets:
 - `SECRET_KEY`: Your JWT secret (generate with `openssl rand -hex 32`)
 - `OPENAI_API_KEY`: Your OpenAI API key
 
-Note: Your Hugging Face token `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` is not needed for the backend since it uses OpenAI, but you can store it as a secret if you plan to integrate Hugging Face models later.
+Note: Your Hugging Face token should be stored securely in Space secrets if needed - never commit tokens to the repository.
 
 ## Step 4: Upload Backend Files
 

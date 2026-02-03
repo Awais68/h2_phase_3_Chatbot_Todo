@@ -27,7 +27,7 @@ Add to `backend/.env`:
 OPENAI_API_KEY=sk-your-openai-api-key-here
 
 # Database URL (already configured)
-DATABASE_URL=postgresql://neondb_owner:npg_uH9gTMsmGw6p@ep-royal-dust-ah4nrunw-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DATABASE_URL=postgresql://username:password@host/dbname?sslmode=require
 ```
 
 ### 3. Run Database Migrations

@@ -21,9 +21,9 @@ This project consists of:
    - `SECRET_KEY`: JWT secret key (generate with `openssl rand -hex 32`)
    - `OPENAI_API_KEY`: Your OpenAI API key
 
-3. For your Hugging Face token: `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`
-   - Store this securely in your Hugging Face Space secrets if needed for any Hugging Face models
-   - This token is specifically for accessing Hugging Face models, but your app currently uses OpenAI
+3. For your Hugging Face token: store it securely in Hugging Face Space secrets (do not commit tokens)
+   - This token is only needed if you access Hugging Face models
+   - The app currently uses OpenAI
 
 ### Frontend (Vercel)
 1. Deploy the frontend directory to Vercel

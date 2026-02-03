@@ -58,7 +58,7 @@ Make sure these are set in Vercel:
 NEXT_PUBLIC_API_URL=https://hackathon-2-phase-ii-full-stack-web-app-1.onrender.com
 NEXT_PUBLIC_APP_URL=https://hackathon-2-phase-ii-full-stack-web-app.vercel.app
 DATABASE_URL=postgresql://...
-BETTER_AUTH_SECRET=Ikns5R4zC2bdlj+83nblBOMlL+jKa9wXdVkfviQDRuQ=
+BETTER_AUTH_SECRET=YOUR_SECRET_KEY_HERE
 ```
 
 ## Testing CORS

@@ -43,7 +43,7 @@ Add these variables:
 DATABASE_URL=postgresql://username:password@host/database?sslmode=require
 
 # 2. Auth Secret (use the same one from your local .env.local)
-BETTER_AUTH_SECRET=Ikns5R4zC2bdlj+83nblBOMlL+jKa9wXdVkfviQDRuQ=
+BETTER_AUTH_SECRET=YOUR_SECRET_KEY_HERE
 
 # 3. Backend API URL (your Render backend)
 NEXT_PUBLIC_API_URL=https://hackathon-2-phase-ii-full-stack-web-app-1.onrender.com

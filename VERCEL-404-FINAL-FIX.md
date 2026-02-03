@@ -39,7 +39,7 @@ Go to: **Vercel → Project → Settings → Environment Variables**
 ```bash
 DATABASE_URL=postgres://1f6963153f296eda7eb508e281da05ae588035327c004e9dcc225ce5a62cc11f:sk_fzHW9fpWqrlYMEiNEFPag@db.prisma.io:5432/postgres?sslmode=require
 
-BETTER_AUTH_SECRET=Ikns5R4zC2bdlj+83nblBOMlL+jKa9wXdVkfviQDRuQ=
+BETTER_AUTH_SECRET=YOUR_SECRET_KEY_HERE
 
 NEXT_PUBLIC_API_URL=https://hackathon-2-phase-ii-full-stack-web-app-1.onrender.com
 

@@ -23,7 +23,7 @@ NEXT_PUBLIC_APP_URL=https://hackathon-2-phase-ii-full-stack-web-app.vercel.app
 DATABASE_URL=postgresql://username:password@host/database?sslmode=require
 
 # Better Auth Secret (generate a random string)
-BETTER_AUTH_SECRET=Ikns5R4zC2bdlj+83nblBOMlL+jKa9wXdVkfviQDRuQ=
+BETTER_AUTH_SECRET=YOUR_SECRET_KEY_HERE
 ```
 
 ### 2. Get Neon PostgreSQL Database URL
