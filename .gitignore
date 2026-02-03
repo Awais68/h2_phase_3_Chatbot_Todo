@@ -58,3 +58,6 @@ htmlcov/
 tasks.json
 tasks.json.backup
 tasks.json.corrupt
+
+# Large binaries
+minikube-linux-amd64
