@@ -1,0 +1,89 @@
+# Default values for todo-chatbot.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  environment: dev
+
+frontend:
+  image:
+    repository: todo-frontend
+    tag: v1
+    pullPolicy: IfNotPresent
+  replicas: 2
+  service:
+    type: ClusterIP
+    port: 3000
+  ingress:
+    enabled: true
+    host: todo.local
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+backend:
+  image:
+    repository: todo-backend
+    tag: v1
+    pullPolicy: IfNotPresent
+  replicas: 2
+  service:
+    type: ClusterIP
+    port: 8000
+  env:
+    DATABASE_URL: postgresql://todouser:changeme123@postgres:5432/tododb
+    NEON_DATABASE_URL: postgresql://todouser:changeme123@postgres:5432/tododb
+  apiKeys:
+    openaiApiKey: "dummy-openai-key-for-testing"  # Replace with actual key in production
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+database:
+  image:
+    repository: postgres
+    tag: "15-alpine"
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: standard
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  credentials:
+    username: todouser
+    password: changeme123
+    database: tododb
+
+# Horizontal Pod Autoscaler configuration
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  cpuThreshold: 70
+  memoryThreshold: 80
+
+# Pod Disruption Budget configuration
+pdb:
+  enabled: true
+  minAvailable: 1
+
+# Network policies for security
+networkPolicy:
+  enabled: true
+  allowFrom:
+    - namespaceSelector:
+        matchLabels:
+          name: todo-app

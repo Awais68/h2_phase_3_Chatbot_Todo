@@ -1,0 +1,83 @@
+# Sample values file for production deployment
+# This overrides the default values in values.yaml
+
+# Frontend configuration
+frontend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: my-registry/todo-frontend
+    pullPolicy: Always
+    tag: "latest"
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 3000
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: frontend.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: frontend-tls
+        hosts:
+          - frontend.example.com
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  env:
+    NEXT_PUBLIC_API_URL: "https://api.example.com"
+    NEXTAUTH_URL: "https://frontend.example.com"
+
+# Backend configuration
+backend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: my-registry/todo-backend
+    pullPolicy: Always
+    tag: "latest"
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: api.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: api-tls
+        hosts:
+          - api.example.com
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    BETTER_AUTH_URL: "https://api.example.com"
+    HOST: "0.0.0.0"
+    PORT: "8000"
+  secretEnv:
+    DATABASE_URL: "postgresql://user:pass@prod-db:5432/prod_todo_db"
+    OPENAI_API_KEY: "sk-prod-api-key"
+    BETTER_AUTH_SECRET: "prod-better-auth-secret"

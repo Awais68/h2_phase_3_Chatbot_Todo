@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-backend-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "todo-chatbot.selectorLabels" . | nindent 4 }}
+    app: backend
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.backend.port }}
+      targetPort: 8000
+  type: {{ .Values.service.backend.type }}

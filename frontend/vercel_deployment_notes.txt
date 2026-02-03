@@ -1,0 +1,26 @@
+Frontend Deployment for Vercel
+=============================
+
+Environment Variables Required:
+- NEXT_PUBLIC_API_URL: Your Hugging Face Space URL (e.g., https://username-space-name.hf.space)
+- NEXT_PUBLIC_APP_URL: Your Vercel project URL (e.g., https://your-project.vercel.app)
+- NEXT_PUBLIC_APP_NAME: Todo Evolution
+- NEXT_PUBLIC_ENABLE_VOICE_COMMANDS: true
+- NEXT_PUBLIC_ENABLE_MULTI_LANGUAGE: true
+- NEXT_PUBLIC_USER_ID: 1
+- NEXT_PUBLIC_ENABLE_VOICE: true
+- NEXT_PUBLIC_ENABLE_ANALYTICS: true
+- NEXT_PUBLIC_ENABLE_RECURRING: true
+- NEXT_PUBLIC_ANALYTICS_DEFAULT_DAYS: 30
+- NEXT_PUBLIC_VOICE_LANG: en-US
+- NEXT_PUBLIC_VOICE_AUTO_SPEAK: true
+- DATABASE_URL: Your Neon PostgreSQL connection string
+- PRISMA_DB_PROVIDER: sqlite
+- BETTER_AUTH_SECRET: Your better auth secret
+- BETTER_AUTH_URL: Your Vercel project URL
+
+Steps:
+1. Push your code to a Git repository (GitHub, GitLab, or Bitbucket)
+2. Go to https://vercel.com and import your project
+3. Add the environment variables above in the Vercel dashboard
+4. Click Deploy

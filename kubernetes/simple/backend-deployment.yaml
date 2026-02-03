@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-app
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        component: backend
+    spec:
+      containers:
+      - name: backend
+        image: todo-app/backend:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: todo-app-secrets
+              key: DATABASE_URL
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: todo-app-secrets
+              key: SECRET_KEY
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: todo-app-secrets
+              key: OPENAI_API_KEY
+        - name: APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-config
+              key: APP_NAME
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-config
+              key: LOG_LEVEL
+        - name: ALGORITHM
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-config
+              key: ALGORITHM
+        - name: ACCESS_TOKEN_EXPIRE_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-config
+              key: ACCESS_TOKEN_EXPIRE_MINUTES
+        - name: CORS_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: todo-app-config
+              key: CORS_ORIGINS
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 10

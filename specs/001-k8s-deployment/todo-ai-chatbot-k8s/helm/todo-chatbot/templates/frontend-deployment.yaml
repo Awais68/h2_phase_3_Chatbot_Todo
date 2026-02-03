@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-frontend-deployment
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount.frontend }}
+  selector:
+    matchLabels:
+      {{- include "todo-chatbot.selectorLabels" . | nindent 6 }}
+      app: frontend
+  template:
+    metadata:
+      labels:
+        {{- include "todo-chatbot.selectorLabels" . | nindent 8 }}
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: "{{ .Values.image.frontend.repository }}:{{ .Values.image.frontend.tag }}"
+        imagePullPolicy: {{ .Values.image.frontend.pullPolicy }}
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://{{ include "todo-chatbot.fullname" . }}-backend-service:{{ .Values.service.backend.port }}"
+        - name: NEXT_PUBLIC_APP_URL
+          value: "http://{{ include "todo-chatbot.fullname" . }}-frontend-service:{{ .Values.service.frontend.port }}"
+        - name: NEXT_PUBLIC_ENABLE_VOICE
+          value: {{ .Values.env.enableVoiceInput | quote }}
+        - name: NEXT_PUBLIC_ENABLE_ANALYTICS
+          value: {{ .Values.env.enableAnalytics | quote }}
+        - name: NEXT_PUBLIC_ENABLE_RECURRING
+          value: {{ .Values.env.enableRecurringTasks | quote }}
+        resources:
+          {{- toYaml .Values.resources.frontend | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL

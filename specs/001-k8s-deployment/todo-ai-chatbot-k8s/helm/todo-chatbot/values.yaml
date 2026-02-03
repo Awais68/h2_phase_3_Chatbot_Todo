@@ -1,0 +1,106 @@
+# Default values for todo-chatbot
+
+# Image configurations
+image:
+  backend:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  mcpServer:
+    repository: todo-mcp-server
+    tag: latest
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# Replica counts
+replicaCount:
+  backend: 2
+  mcpServer: 2
+  frontend: 2
+
+# Resource limits and requests
+resources:
+  backend:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  mcpServer:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  frontend:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+# Service configurations
+service:
+  backend:
+    type: ClusterIP
+    port: 8000
+  mcpServer:
+    type: ClusterIP
+    port: 3000
+  frontend:
+    type: NodePort
+    port: 3000
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: todo.local
+      paths:
+        - path: /
+          pathType: Prefix
+        - path: /api
+          pathType: Prefix
+    - host: todo-api.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+# Environment variables
+env:
+  appEnv: "production"
+  logLevel: "info"
+  enableVoiceInput: "true"
+  enableVoiceOutput: "true"
+  enableAnalytics: "true"
+  enableRecurringTasks: "true"
+
+# Autoscaling configuration
+autoscaling:
+  enabled: false
+  backend:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+  frontend:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+# Secrets (these should be overridden in production)
+secrets:
+  databaseUrl: "postgresql://user:password@postgres-service:5432/todo_db"
+  openaiApiKey: "sk-api-key-placeholder"
+  betterAuthSecret: "my-secret-should-be-at-least-32-characters-long"

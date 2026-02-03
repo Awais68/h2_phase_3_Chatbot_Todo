@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  backend:
+    image: todo-backend:latest
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/todo
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
+      - MCP_SERVER_URL=http://mcp-server:3000
+      - LOG_LEVEL=INFO
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ../backend:/app:ro
+
+  mcp-server:
+    image: todo-mcp-server:latest
+    build:
+      context: ../mcp-server
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/todo
+      - MCP_SERVER_PORT=3000
+      - LOG_LEVEL=INFO
+    depends_on:
+      - db
+    volumes:
+      - ../mcp-server:/app:ro
+
+  frontend:
+    image: todo-frontend:latest
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_APP_URL=http://localhost:3001
+      - NEXT_PUBLIC_ENABLE_VOICE=true
+      - NEXT_PUBLIC_ENABLE_ANALYTICS=true
+      - NEXT_PUBLIC_ENABLE_RECURRING=true
+    depends_on:
+      - backend
+    volumes:
+      - ../frontend:/app:ro
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: todo
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d todo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -1,0 +1,53 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release "{{ .Release.Name }}" has been deployed successfully.
+
+Frontend Application:
+{{- if .Values.frontend.ingress.enabled }}
+{{- range $host := .Values.frontend.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.frontend.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.frontend.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "todo-app.fullname" . }}-frontend)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.frontend.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "todo-app.fullname" . }}-frontend'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "todo-app.fullname" . }}-frontend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.frontend.service.port }}
+{{- else if contains "ClusterIP" .Values.frontend.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "todo-app.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app=frontend" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:3000 to use your frontend application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 3000:$CONTAINER_PORT
+{{- end }}
+
+Backend Application:
+{{- if .Values.backend.ingress.enabled }}
+{{- range $host := .Values.backend.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.backend.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else if contains "NodePort" .Values.backend.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "todo-app.fullname" . }}-backend)
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.backend.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "todo-app.fullname" . }}-backend'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "todo-app.fullname" . }}-backend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.backend.service.port }}
+{{- else if contains "ClusterIP" .Values.backend.service.type }}
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "todo-app.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app=backend" -o jsonpath="{.items[0].metadata.name}")
+  export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+  echo "Visit http://127.0.0.1:8000 to use your backend application"
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8000:$CONTAINER_PORT
+{{- end }}
+
+To learn more about the release, try:
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}

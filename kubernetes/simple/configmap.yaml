@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-app-config
+  namespace: todo-app
+data:
+  APP_NAME: "Todo Evolution API"
+  APP_VERSION: "2.0.0"
+  LOG_LEVEL: "INFO"
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  CORS_ORIGINS: '["http://localhost:3000","http://localhost:30080","https://*.vercel.app"]'
+  NEXT_PUBLIC_API_URL: "http://backend-service:8000"
+  NEXT_PUBLIC_APP_URL: "http://localhost:30080"

@@ -212,6 +212,8 @@ See `.specify/memory/constitution.md` for code quality, testing, performance, se
 ## Active Technologies
 - Python 3.13+ (backend), JavaScript/TypeScript (frontend) (001-todo-ai-chatbot)
 - Neon Serverless PostgreSQL (tasks, conversations, messages) (001-todo-ai-chatbot)
+- Dockerfile, YAML manifests, Helm templates + Docker, Kubernetes, Minikube, Helm, kubectl, Gordon (Docker AI Agent), kubectl-ai, Kagent (001-k8s-deployment)
+- Neon Serverless PostgreSQL (cloud-based), ephemeral storage for Kubernetes pods (001-k8s-deployment)
 
 ## Recent Changes
 - 001-todo-ai-chatbot: Added Python 3.13+ (backend), JavaScript/TypeScript (frontend)

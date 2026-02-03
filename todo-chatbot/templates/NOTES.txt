@@ -1,0 +1,27 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+The Todo Chatbot application has been deployed with:
+- Frontend: {{ .Values.frontend.replicas }} replicas
+- Backend: {{ .Values.backend.replicas }} replicas
+- Database: 1 replica with persistent storage
+
+{{- if .Values.frontend.ingress.enabled }}
+You can access the application at: http://{{ .Values.frontend.ingress.host }}
+{{- else }}
+You can access the frontend service via port {{ .Values.frontend.service.port }} on the following DNS name:
+{{ include "todo-chatbot.fullname" . }}-frontend.{{ .Release.Namespace }}.svc.cluster.local
+{{- end }}
+
+To check the status of pods:
+  kubectl get pods -n {{ .Release.Namespace }}
+
+To view logs:
+  kubectl logs -f deployment/{{ include "todo-chatbot.fullname" . }}-backend -n {{ .Release.Namespace }}
+  kubectl logs -f deployment/{{ include "todo-chatbot.fullname" . }}-frontend -n {{ .Release.Namespace }}

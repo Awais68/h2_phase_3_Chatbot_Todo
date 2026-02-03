@@ -1,0 +1,21 @@
+{{- if or .Values.frontend.env .Values.backend.env }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "todo-app.fullname" . }}-config
+  labels:
+    {{- include "todo-app.labels" . | nindent 4 }}
+data:
+  {{- if .Values.frontend.env }}
+  frontend.env: |
+    {{- range $key, $value := .Values.frontend.env }}
+    {{ $key }}={{ $value }}
+    {{- end }}
+  {{- end }}
+  {{- if .Values.backend.env }}
+  backend.env: |
+    {{- range $key, $value := .Values.backend.env }}
+    {{ $key }}={{ $value }}
+    {{- end }}
+  {{- end }}
+{{- end }}

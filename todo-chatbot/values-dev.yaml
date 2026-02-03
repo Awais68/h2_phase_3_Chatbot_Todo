@@ -1,0 +1,48 @@
+# Development environment values
+global:
+  environment: dev
+
+frontend:
+  replicas: 1
+  ingress:
+    enabled: true
+    host: todo.local
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+backend:
+  replicas: 1
+  env:
+    DATABASE_URL: postgresql://todouser:changeme123@todo-app-todo-chatbot-postgres:5432/tododb
+    NEON_DATABASE_URL: postgresql://todouser:changeme123@todo-app-todo-chatbot-postgres:5432/tododb
+  apiKeys:
+    openaiApiKey: "dummy-openai-key-for-development"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+database:
+  persistence:
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+hpa:
+  enabled: false
+
+pdb:
+  enabled: false

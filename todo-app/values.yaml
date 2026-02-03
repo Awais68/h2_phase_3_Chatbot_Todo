@@ -1,0 +1,226 @@
+# Default values for todo-app with frontend and backend.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global settings
+global:
+  imagePullSecrets: []
+
+# Frontend configuration
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: todo-frontend
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  podAnnotations: {}
+  podLabels: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: frontend.chart-example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: []
+    #  - secretName: frontend-chart-example-tls
+    #    hosts:
+    #      - frontend.chart-example.local
+
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  # Environment variables for frontend
+  env:
+    NEXT_PUBLIC_API_URL: "http://backend-service:8000"
+    NEXTAUTH_SECRET: "your-secret-key"
+    NEXTAUTH_URL: "http://localhost:3000"
+  # Secret environment variables for frontend (will be stored in Kubernetes Secret)
+  secretEnv: {}
+    # NEXTAUTH_SECRET: "your-real-secret-here"
+    # DATABASE_URL: "postgresql://..."
+
+# Backend configuration
+backend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: todo-backend
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  imagePullSecrets: []
+  nameOverride: ""
+  fullnameOverride: ""
+
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Automatically mount a ServiceAccount's API credentials?
+    automount: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  podAnnotations: {}
+  podLabels: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: backend.chart-example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: []
+    #  - secretName: backend-chart-example-tls
+    #    hosts:
+    #      - backend.chart-example.local
+
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  # Environment variables for backend
+  env:
+    DATABASE_URL: "postgresql://user:password@postgres-service:5432/todo_db"
+    OPENAI_API_KEY: "your-openai-api-key"
+    BETTER_AUTH_SECRET: "your-better-auth-secret"
+    BETTER_AUTH_URL: "http://localhost:8000"
+    HOST: "0.0.0.0"
+    PORT: "8000"
+  # Secret environment variables for backend (will be stored in Kubernetes Secret)
+  secretEnv: {}
+    # DATABASE_URL: "postgresql://real-user:real-password@postgres-service:5432/todo_db"
+    # OPENAI_API_KEY: "sk-your-real-openai-key"
+    # BETTER_AUTH_SECRET: "your-real-better-auth-secret"
+
+# Shared configuration
+shared:
+  imagePullSecrets: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}

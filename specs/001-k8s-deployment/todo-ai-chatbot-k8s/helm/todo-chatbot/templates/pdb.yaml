@@ -1,0 +1,41 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-backend-pdb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "todo-chatbot.selectorLabels" . | nindent 6 }}
+      app: backend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-frontend-pdb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "todo-chatbot.selectorLabels" . | nindent 6 }}
+      app: frontend
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-mcp-pdb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "todo-chatbot.labels" . | nindent 4 }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "todo-chatbot.selectorLabels" . | nindent 6 }}
+      app: mcp-server
