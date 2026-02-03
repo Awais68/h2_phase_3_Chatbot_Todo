@@ -33,7 +33,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://your-hf-space-username.hf.space/api/:path*" // Replace with your actual Hugging Face Space URL
+      "destination": "https://awais68-todo-chatbot.hf.space/api/:path*"
     }
   ]
 }
