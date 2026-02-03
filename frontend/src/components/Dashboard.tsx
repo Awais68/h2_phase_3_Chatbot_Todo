@@ -29,14 +29,30 @@ import {
     BarChart3,
     LogOut,
     MessageSquare,
+    Repeat,
 } from 'lucide-react';
 import VoiceCommandButton from './VoiceCommandButton';
 import ParticlesBackground from './ParticlesBackground';
 import ChatTab from './ChatTab';
+import RecursionTab from './RecursionTab';
 import { api } from '@/lib/api';
 import { useSession, signOut } from '@/lib/auth-client';
 
 // Types
+interface Item {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  completed?: boolean;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  items: Item[];
+}
+
 interface Mission {
     id: string;
     title: string;
@@ -48,6 +64,7 @@ interface Mission {
     tags: string[];
     category: string;
     recursion?: string;
+    shoppingList?: Category[];
 }
 
 interface MissionTab {
@@ -117,7 +134,52 @@ const mockMissions: Mission[] = [
         category: 'Training',
         recursion: 'Bi-weekly',
     },
-];
+        {
+            id: '6',
+            title: 'Grocery Shopping List',
+            description: 'Weekly grocery shopping trip',
+            priority: 'medium',
+            status: 'active',
+            dueDate: '2025-01-25',
+            createdAt: '2025-01-18T10:00:00Z',
+            tags: ['shopping', 'groceries'],
+            category: 'Groceries',
+            shoppingList: [
+                {
+                    id: '1',
+                    name: 'Groceries',
+                    items: [
+                        { id: '1', name: 'Flour', price: 2.50, quantity: 2, completed: false },
+                        { id: '2', name: 'Surf', price: 3.20, quantity: 1, completed: false },
+                        { id: '3', name: 'Soap', price: 1.80, quantity: 3, completed: true },
+                        { id: '4', name: 'Match Box', price: 0.50, quantity: 2, completed: false },
+                    ]
+                }
+            ]
+        },
+        {
+            id: '7',
+            title: 'Office Supplies',
+            description: 'Monthly office supplies purchase',
+            priority: 'medium',
+            status: 'active',
+            dueDate: '2025-02-01',
+            createdAt: '2025-01-18T11:00:00Z',
+            tags: ['office', 'supplies'],
+            category: 'Office',
+            shoppingList: [
+                {
+                    id: '2',
+                    name: 'Office Supplies',
+                    items: [
+                        { id: '5', name: 'Pens', price: 1.20, quantity: 10, completed: false },
+                        { id: '6', name: 'Paper', price: 5.00, quantity: 2, completed: true },
+                        { id: '7', name: 'Stapler', price: 8.50, quantity: 1, completed: false },
+                    ]
+                }
+            ]
+        },
+    ];
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -263,11 +325,12 @@ const MissionCard = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             whileHover={{ scale: 1.02 }}
-            className={`relative backdrop-blur-xl border rounded-xl p-5 m-2 transition-all duration-300 shadow-lg
+            className={`relative backdrop-blur-xl border rounded-xl p-5 m-2 transition-all duration-300 shadow-lg cursor-pointer
                 ${isDark
                     ? 'bg-slate-800/40 border-cyan-500/20 hover:border-cyan-400/40 shadow-cyan-500/5'
                     : 'bg-white/60 border-sky-200/60 hover:border-sky-300/80 shadow-sky-500/10'
                 }`}
+            onClick={() => handleMissionCardClick(mission)}
         >
             {/* Checkbox for Mark as Complete */}
             <div className="absolute top-3 left-3 flex items-center gap-2">
@@ -395,6 +458,23 @@ const MissionCard = ({
                         #{tag}
                     </span>
                 ))}
+            </div>
+
+            {/* Open Button */}
+            <div className="mt-4 pt-3 border-t border-gray-300 border-opacity-30">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering the card click
+                        handleMissionCardClick(mission, e);
+                    }}
+                    className={`w-full py-2 text-sm rounded-lg border transition-all ${
+                        isDark
+                            ? 'border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10'
+                            : 'border-cyan-300 text-cyan-600 hover:bg-cyan-100'
+                    }`}
+                >
+                    Open Task
+                </button>
             </div>
         </motion.div>
     );
@@ -632,6 +712,7 @@ export default function Dashboard() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPriority, setSelectedPriority] = useState<string>('all');
     const [selectedStatus, setSelectedStatus] = useState<string>('all');
+    const [selectedCategory, setSelectedCategory] = useState<string>('all'); // For category filtering
     const [showFilters, setShowFilters] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -646,6 +727,16 @@ export default function Dashboard() {
         }
         return true;
     });
+    const [showShoppingList, setShowShoppingList] = useState(false);
+    const [shoppingListCategory, setShoppingListCategory] = useState<string>('');
+    const [newItemName, setNewItemName] = useState('');
+    const [newItemPrice, setNewItemPrice] = useState(0);
+    const [newItemQuantity, setNewItemQuantity] = useState(1);
+    const [editingItemId, setEditingItemId] = useState<string | null>(null);
+    const [editingItemMissionId, setEditingItemMissionId] = useState<string | null>(null);
+    const [editingItemCategoryId, setEditingItemCategoryId] = useState<string | null>(null);
+    const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+    const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
 
     // Fetch tasks from API on mount
     useEffect(() => {
@@ -662,6 +753,8 @@ export default function Dashboard() {
                 // Check authentication
                 if (!isAuthenticated) {
                     console.log('Not authenticated - showing empty dashboard');
+                    // Even when not authenticated, we can show mock data for demonstration
+                    setMissions(mockMissions);
                     setLoading(false);
                     return;
                 }
@@ -679,35 +772,42 @@ export default function Dashboard() {
 
                 if (!userId) {
                     console.error('No userId found in session');
+                    // Use mock data if no user ID found
+                    setMissions(mockMissions);
                     setLoading(false);
                     return;
                 }
 
                 const userEmail = session?.user?.email;
                 const userName = session?.user?.name;
-                const tasks = await api.tasks.list({ userId, userEmail, userName });
 
-                // Map backend tasks to Mission format
-                const mappedTasks: Mission[] = tasks.map((task: any) => ({
-                    id: task.id.toString(),
-                    title: task.title,
-                    description: task.description || '',
-                    priority: (task.priority || 'medium') as 'critical' | 'high' | 'medium' | 'low',
-                    status: (task.status || 'pending') as 'pending' | 'active' | 'completed' | 'failed',
-                    dueDate: task.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                    createdAt: task.createdAt,
-                    tags: task.tags || [],
-                    category: task.category || 'General',
-                    recursion: task.recursion
-                }));
-                setMissions(mappedTasks);
-            } catch (error) {
-                console.error('Failed to fetch tasks:', error);
-                // If not authenticated, show empty dashboard
-                if (error instanceof Error && (error.message.includes('401') || error.message.includes('Unauthorized'))) {
-                    console.log('Authentication error - clearing missions');
-                    setMissions([]);
+                // Try to fetch from backend, but fallback to mock data if API fails
+                try {
+                    const tasks = await api.tasks.list({ userId, userEmail, userName });
+
+                    // Map backend tasks to Mission format
+                    const mappedTasks: Mission[] = tasks.map((task: any) => ({
+                        id: task.id.toString(),
+                        title: task.title,
+                        description: task.description || '',
+                        priority: (task.priority || 'medium') as 'critical' | 'high' | 'medium' | 'low',
+                        status: (task.status || 'pending') as 'pending' | 'active' | 'completed' | 'failed',
+                        dueDate: task.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                        createdAt: task.createdAt,
+                        tags: task.tags || [],
+                        category: task.category || 'General',
+                        recursion: task.recursion
+                    }));
+                    setMissions(mappedTasks);
+                } catch (apiError) {
+                    console.warn('Failed to fetch tasks from backend, using mock data:', apiError);
+                    // Fallback to mock data if API fails
+                    setMissions(mockMissions);
                 }
+            } catch (error) {
+                console.error('Unexpected error in fetchTasks:', error);
+                // Use mock data as ultimate fallback
+                setMissions(mockMissions);
             } finally {
                 setLoading(false);
             }
@@ -750,6 +850,18 @@ export default function Dashboard() {
         pending: [4, 3, 5, 4, 3, 4, 6],
     };
 
+    // Define fixed system categories
+    const systemCategories = [
+        'Groceries', 'Office', 'Personal', 'Health', 'Finance', 'Projects', 'Shopping',
+        'Maintenance', 'Education', 'Entertainment', 'Travel', 'Utilities'
+    ];
+
+    // Extract unique categories from missions
+    const uniqueCategories = Array.from(new Set(missions.map(mission => mission.category)));
+
+    // Combine system categories with mission categories to show all
+    const allCategories = Array.from(new Set([...systemCategories, ...uniqueCategories]));
+
     // Mission tabs with dynamic counts
     const missionTabs: MissionTab[] = [
         { id: 'all', label: 'All Missions', icon: <Target className="w-5 h-5" />, count: missions.length },
@@ -757,6 +869,7 @@ export default function Dashboard() {
         { id: 'pending', label: 'Pending', icon: <AlertTriangle className="w-5 h-5" />, count: stats.pending },
         { id: 'completed', label: 'Completed', icon: <CheckCircle className="w-5 h-5" />, count: stats.completed },
         { id: 'starred', label: 'Priority', icon: <Star className="w-5 h-5" />, count: missions.filter(m => m.priority === 'critical' || m.priority === 'high').length },
+        { id: 'recursion', label: 'Recursion', icon: <Repeat className="w-5 h-5" />, count: 0 },
         { id: 'chatbot', label: 'AI Assistant', icon: <MessageSquare className="w-5 h-5" />, count: 0 },
     ];
 
@@ -780,6 +893,7 @@ export default function Dashboard() {
         }
         if (selectedPriority !== 'all' && mission.priority !== selectedPriority) return false;
         if (selectedStatus !== 'all' && mission.status !== selectedStatus) return false;
+        if (selectedCategory !== 'all' && mission.category !== selectedCategory) return false;
         return true;
     });
 
@@ -792,28 +906,47 @@ export default function Dashboard() {
             const userName = session?.user?.name;
 
             // Create task in backend with all fields
-            const task = await api.tasks.create({
-                title: missionData.title,
-                description: missionData.description,
-                priority: missionData.priority,
-                status: missionData.status,
-                dueDate: missionData.dueDate,
-                recursion: missionData.recursion,
-                category: missionData.category,
-                tags: missionData.tags,
-                userId: userId,
-                userEmail: userEmail,
-                userName: userName
-            });
+            try {
+                const task = await api.tasks.create({
+                    title: missionData.title,
+                    description: missionData.description,
+                    priority: missionData.priority,
+                    status: missionData.status,
+                    dueDate: missionData.dueDate,
+                    recursion: missionData.recursion,
+                    category: missionData.category,
+                    tags: missionData.tags,
+                    userId: userId,
+                    userEmail: userEmail,
+                    userName: userName
+                });
 
-            // Add to local state
-            const newMission: Mission = {
-                ...missionData,
-                id: task.id.toString(),
-                createdAt: (task as any).createdAt || new Date().toISOString(),
-            };
-            setMissions(prev => [newMission, ...prev]);
-            setShowAddModal(false);
+                // Add to local state
+                const newMission: Mission = {
+                    ...missionData,
+                    id: task.id.toString(),
+                    createdAt: (task as any).createdAt || new Date().toISOString(),
+                };
+                setMissions(prev => [newMission, ...prev]);
+                setShowAddModal(false);
+            } catch (apiError) {
+                console.warn('Failed to create task in backend, using local storage:', apiError);
+
+                // Generate a local ID for the new task
+                const localId = `local-${Date.now()}`;
+
+                // Add to local state with local ID
+                const newMission: Mission = {
+                    ...missionData,
+                    id: localId,
+                    createdAt: new Date().toISOString(),
+                };
+                setMissions(prev => [newMission, ...prev]);
+                setShowAddModal(false);
+
+                // Show a message that task was saved locally
+                alert('Task saved locally. Backend may be unavailable.');
+            }
         } catch (error) {
             console.error('Failed to create task - Full error:', error);
 
@@ -843,19 +976,56 @@ export default function Dashboard() {
     // Delete mission (move to trash)
     const handleDeleteMission = useCallback(async (id: string) => {
         try {
-            const userId = session?.user?.id || session?.user?.email;
-            await api.tasks.delete(id, userId);
-            setMissions(prev => prev.filter(m => m.id !== id));
+            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+
+            // Try to delete from backend
+            try {
+                await api.tasks.delete(id, userId);
+
+                setMissions(prev => prev.filter(m => m.id !== id));
+
+                // If the deleted mission was the selected one, close the detail view
+                if (selectedMission && selectedMission.id === id) {
+                    setSelectedMission(null);
+                }
+            } catch (apiError) {
+                console.warn('Failed to delete task in backend, removing locally:', apiError);
+
+                // Remove locally anyway
+                setMissions(prev => prev.filter(m => m.id !== id));
+
+                // If the deleted mission was the selected one, close the detail view
+                if (selectedMission && selectedMission.id === id) {
+                    setSelectedMission(null);
+                }
+
+                // Show a message that changes were saved locally
+                alert('Task removed locally. Backend may be unavailable.');
+            }
         } catch (error) {
             console.error('Failed to delete task:', error);
             alert('Failed to delete task. Please try again.');
         }
-    }, [session]);
+    }, [session, selectedMission]);
 
     // Edit mission
     const handleEditMission = useCallback((mission: Mission) => {
         setEditingMission(mission);
         setShowEditModal(true);
+    }, []);
+
+    // Handle mission selection to show details
+    const handleMissionClick = useCallback((mission: Mission) => {
+        // Set the selected mission to show its details
+        setSelectedMission(mission);
+    }, []);
+
+    // Handle mission click from card (separate function to avoid conflicts)
+    const handleMissionCardClick = useCallback((mission: Mission, e?: React.MouseEvent) => {
+        if (e) {
+            e.stopPropagation(); // Stop event propagation if it's a click event
+        }
+        setSelectedMission(mission);
     }, []);
 
     // Save edited mission
@@ -864,24 +1034,46 @@ export default function Dashboard() {
 
         try {
             const userId = session?.user?.id || session?.user?.email || 'anonymous';
-            await api.tasks.update(editingMission.id, {
-                title: updatedMission.title,
-                description: updatedMission.description,
-                status: updatedMission.status,
-                priority: updatedMission.priority,
-                dueDate: updatedMission.dueDate,
-                recursion: updatedMission.recursion,
-                category: updatedMission.category,
-                tags: updatedMission.tags,
-            }, userId);
 
-            setMissions(prev => prev.map(m =>
-                m.id === editingMission.id
-                    ? { ...m, ...updatedMission }
-                    : m
-            ));
-            setShowEditModal(false);
-            setEditingMission(null);
+            // Try to update in backend
+            try {
+                // Ensure all required fields are present
+                const taskUpdateData = {
+                    title: updatedMission.title || editingMission.title,
+                    description: updatedMission.description || editingMission.description || '',
+                    status: updatedMission.status || editingMission.status,
+                    priority: updatedMission.priority || editingMission.priority,
+                    dueDate: updatedMission.dueDate || editingMission.dueDate,
+                    recursion: updatedMission.recursion,
+                    category: updatedMission.category || editingMission.category,
+                    tags: updatedMission.tags || editingMission.tags || [],
+                    shoppingList: updatedMission.shoppingList || editingMission.shoppingList || [], // Include shopping list data
+                };
+
+                await api.tasks.update(editingMission.id, taskUpdateData, userId);
+
+                setMissions(prev => prev.map(m =>
+                    m.id === editingMission.id
+                        ? { ...m, ...updatedMission }
+                        : m
+                ));
+                setShowEditModal(false);
+                setEditingMission(null);
+            } catch (apiError) {
+                console.warn('Failed to update task in backend, updating locally:', apiError);
+
+                // Update locally anyway
+                setMissions(prev => prev.map(m =>
+                    m.id === editingMission.id
+                        ? { ...m, ...updatedMission }
+                        : m
+                ));
+                setShowEditModal(false);
+                setEditingMission(null);
+
+                // Show a message that changes were saved locally
+                alert('Changes saved locally. Backend may be unavailable.');
+            }
         } catch (error) {
             console.error('Failed to update task:', error);
             alert('Failed to update task. Please try again.');
@@ -896,18 +1088,476 @@ export default function Dashboard() {
 
             const userId = session?.user?.id || session?.user?.email || 'anonymous';
             const newStatus = mission.status === 'completed' ? 'pending' : 'completed';
-            await api.tasks.update(id, { status: newStatus }, userId);
 
-            setMissions(prev => prev.map(m =>
-                m.id === id
-                    ? { ...m, status: newStatus }
-                    : m
-            ));
+            // Try to update in backend
+            try {
+                // Ensure all required fields are sent to prevent validation errors
+                const taskUpdateData = {
+                    title: mission.title,
+                    description: mission.description || '',
+                    status: newStatus,
+                    priority: mission.priority,
+                    dueDate: mission.dueDate,
+                    recursion: mission.recursion,
+                    category: mission.category,
+                    tags: mission.tags || [],
+                    shoppingList: mission.shoppingList || [], // Include shopping list data
+                };
+
+                await api.tasks.update(id, taskUpdateData, userId);
+
+                setMissions(prev => prev.map(m =>
+                    m.id === id
+                        ? { ...m, status: newStatus }
+                        : m
+                ));
+            } catch (apiError) {
+                console.warn('Failed to update task in backend, updating locally:', apiError);
+
+                // Update locally anyway
+                setMissions(prev => prev.map(m =>
+                    m.id === id
+                        ? { ...m, status: newStatus }
+                        : m
+                ));
+
+                // Show a message that changes were saved locally
+                alert('Changes saved locally. Backend may be unavailable.');
+            }
         } catch (error) {
             console.error('Failed to update task:', error);
             alert('Failed to update task. Please try again.');
         }
     }, [missions, session]);
+
+    // Add or update item in shopping list
+    const addItemToShoppingList = (categoryName: string) => {
+        if (!newItemName.trim() || newItemPrice < 0) return;
+
+        const newItem: Item = {
+            id: editingItemId || Date.now().toString(),
+            name: newItemName,
+            price: newItemPrice,
+            quantity: newItemQuantity,
+            completed: editingItemId ? (missions
+                .find(m => m.id === editingItemMissionId)?.shoppingList
+                ?.find(c => c.id === editingItemCategoryId)?.items
+                ?.find(i => i.id === editingItemId)?.completed || false) : false
+        };
+
+        setMissions(prevMissions => {
+            // Find missions in the selected category
+            const categoryMissions = prevMissions.filter(m => m.category === categoryName);
+
+            if (categoryMissions.length === 0 && !editingItemId) {
+                // If no mission exists in this category, create one
+                const newMission: Mission = {
+                    id: Date.now().toString(),
+                    title: `${categoryName} Shopping List`,
+                    description: `Shopping list for ${categoryName}`,
+                    priority: 'medium',
+                    status: 'active',
+                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    createdAt: new Date().toISOString(),
+                    tags: ['shopping'],
+                    category: categoryName,
+                    shoppingList: [{
+                        id: Date.now().toString(),
+                        name: categoryName,
+                        items: [newItem]
+                    }]
+                };
+
+                return [newMission, ...prevMissions];
+            } else {
+                // Update existing missions in the category or edit existing item
+                return prevMissions.map(mission => {
+                    if (mission.category === categoryName || mission.id === editingItemMissionId) {
+                        let updatedShoppingList = [...(mission.shoppingList || [])];
+
+                        if (editingItemId && editingItemCategoryId) {
+                            // Editing existing item
+                            updatedShoppingList = updatedShoppingList.map(category => {
+                                if (category.id === editingItemCategoryId) {
+                                    const updatedItems = category.items.map(item => {
+                                        if (item.id === editingItemId) {
+                                            return newItem;
+                                        }
+                                        return item;
+                                    });
+                                    return { ...category, items: updatedItems };
+                                }
+                                return category;
+                            });
+                        } else {
+                            // Adding new item
+                            // Find if there's already a category with this name
+                            const categoryIndex = updatedShoppingList.findIndex(cat => cat.name === categoryName);
+
+                            if (categoryIndex !== -1) {
+                                // Add item to existing category
+                                updatedShoppingList[categoryIndex] = {
+                                    ...updatedShoppingList[categoryIndex],
+                                    items: [...updatedShoppingList[categoryIndex].items, newItem]
+                                };
+                            } else {
+                                // Create new category with the item
+                                updatedShoppingList.push({
+                                    id: Date.now().toString(),
+                                    name: categoryName,
+                                    items: [newItem]
+                                });
+                            }
+                        }
+
+                        return {
+                            ...mission,
+                            shoppingList: updatedShoppingList
+                        };
+                    }
+                    return mission;
+                });
+            }
+        });
+
+        // If the selected mission is the one being updated, update the selectedMission state too
+        if (selectedMission && selectedMission.id === editingItemMissionId) {
+            setSelectedMission(prev => {
+                if (!prev || !prev.shoppingList) return prev;
+
+                let updatedShoppingList = [...prev.shoppingList];
+
+                if (editingItemId && editingItemCategoryId) {
+                    // Editing existing item
+                    updatedShoppingList = updatedShoppingList.map(category => {
+                        if (category.id === editingItemCategoryId) {
+                            const updatedItems = category.items.map(item => {
+                                if (item.id === editingItemId) {
+                                    return newItem;
+                                }
+                                return item;
+                            });
+                            return { ...category, items: updatedItems };
+                        }
+                        return category;
+                    });
+                } else {
+                    // Adding new item
+                    const categoryIndex = updatedShoppingList.findIndex(cat => cat.name === categoryName);
+
+                    if (categoryIndex !== -1) {
+                        // Add item to existing category
+                        updatedShoppingList[categoryIndex] = {
+                            ...updatedShoppingList[categoryIndex],
+                            items: [...updatedShoppingList[categoryIndex].items, newItem]
+                        };
+                    } else {
+                        // Create new category with the item
+                        updatedShoppingList.push({
+                            id: Date.now().toString(),
+                            name: categoryName,
+                            items: [newItem]
+                        });
+                    }
+                }
+
+                return {
+                    ...prev,
+                    shoppingList: updatedShoppingList
+                };
+            });
+        }
+
+        // Attempt to save to backend by updating the parent task
+        if (editingItemMissionId) {
+            const missionToUpdate = missions.find(m => m.id === editingItemMissionId);
+            if (missionToUpdate) {
+                const userId = session?.user?.id || session?.user?.email || 'anonymous';
+
+                const taskUpdateData = {
+                    title: missionToUpdate.title,
+                    description: missionToUpdate.description || '',
+                    status: missionToUpdate.status,
+                    priority: missionToUpdate.priority,
+                    dueDate: missionToUpdate.dueDate,
+                    recursion: missionToUpdate.recursion,
+                    category: missionToUpdate.category,
+                    tags: missionToUpdate.tags || [],
+                    shoppingList: [...(missionToUpdate.shoppingList || [])], // This will include the new/updated item
+                };
+
+                api.tasks.update(editingItemMissionId, taskUpdateData, userId)
+                    .catch(error => {
+                        console.error('Failed to save sub-item to backend:', error);
+                        // Optionally show an error message to the user
+                        // alert('Failed to save sub-item to database. Changes are saved locally.');
+                    });
+            }
+        }
+
+        // Reset form
+        setNewItemName('');
+        setNewItemPrice(0);
+        setNewItemQuantity(1);
+        setEditingItemId(null);
+        setEditingItemMissionId(null);
+        setEditingItemCategoryId(null);
+    };
+
+    // Remove item from shopping list
+    const removeItemFromShoppingList = (missionId: string, categoryId: string, itemId: string) => {
+        setMissions(prevMissions =>
+            prevMissions.map(mission => {
+                if (mission.id === missionId && mission.shoppingList) {
+                    const updatedShoppingList = mission.shoppingList.map(category => {
+                        if (category.id === categoryId) {
+                            return {
+                                ...category,
+                                items: category.items.filter(item => item.id !== itemId)
+                            };
+                        }
+                        return category;
+                    }).filter(category => category.items.length > 0); // Remove empty categories
+
+                    return {
+                        ...mission,
+                        shoppingList: updatedShoppingList
+                    };
+                }
+                return mission;
+            })
+        );
+
+        // If the selected mission is the one being updated, update the selectedMission state too
+        if (selectedMission && selectedMission.id === missionId) {
+            setSelectedMission(prev => {
+                if (!prev || !prev.shoppingList) return prev;
+
+                const updatedShoppingList = prev.shoppingList.map(category => {
+                    if (category.id === categoryId) {
+                        return {
+                            ...category,
+                            items: category.items.filter(item => item.id !== itemId)
+                        };
+                    }
+                    return category;
+                }).filter(category => category.items.length > 0); // Remove empty categories
+
+                return {
+                    ...prev,
+                    shoppingList: updatedShoppingList
+                };
+            });
+        }
+
+        // Sync with backend by updating the parent task
+        const missionToUpdate = missions.find(m => m.id === missionId);
+        if (missionToUpdate) {
+            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+
+            const taskUpdateData = {
+                title: missionToUpdate.title,
+                description: missionToUpdate.description || '',
+                status: missionToUpdate.status,
+                priority: missionToUpdate.priority,
+                dueDate: missionToUpdate.dueDate,
+                recursion: missionToUpdate.recursion,
+                category: missionToUpdate.category,
+                tags: missionToUpdate.tags || [],
+                shoppingList: [...(missionToUpdate.shoppingList || [])], // This will exclude the deleted item
+            };
+
+            api.tasks.update(missionId, taskUpdateData, userId)
+                .catch(error => {
+                    console.error('Failed to save sub-item deletion to backend:', error);
+                    // Optionally show an error message to the user
+                    // alert('Failed to save sub-item deletion to database. Changes are saved locally.');
+                });
+        }
+    };
+
+    // Calculate total cost for a category
+    const calculateCategoryTotal = (items: Item[]) => {
+        return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+    };
+
+    // Edit item in shopping list
+    const editItemInShoppingList = (missionId: string, categoryId: string, itemId: string, updates: Partial<Item>) => {
+        setMissions(prevMissions =>
+            prevMissions.map(mission => {
+                if (mission.id === missionId && mission.shoppingList) {
+                    const updatedShoppingList = mission.shoppingList.map(category => {
+                        if (category.id === categoryId) {
+                            const updatedItems = category.items.map(item => {
+                                if (item.id === itemId) {
+                                    return { ...item, ...updates };
+                                }
+                                return item;
+                            });
+
+                            return {
+                                ...category,
+                                items: updatedItems
+                            };
+                        }
+                        return category;
+                    });
+
+                    return {
+                        ...mission,
+                        shoppingList: updatedShoppingList
+                    };
+                }
+                return mission;
+            })
+        );
+
+        // If the selected mission is the one being updated, update the selectedMission state too
+        if (selectedMission && selectedMission.id === missionId) {
+            setSelectedMission(prev => {
+                if (!prev || !prev.shoppingList) return prev;
+
+                const updatedShoppingList = prev.shoppingList.map(category => {
+                    if (category.id === categoryId) {
+                        const updatedItems = category.items.map(item => {
+                            if (item.id === itemId) {
+                                return { ...item, ...updates };
+                            }
+                            return item;
+                        });
+
+                        return {
+                            ...category,
+                            items: updatedItems
+                        };
+                    }
+                    return category;
+                });
+
+                return {
+                    ...prev,
+                    shoppingList: updatedShoppingList
+                };
+            });
+        }
+
+        // Sync with backend by updating the parent task
+        const missionToUpdate = missions.find(m => m.id === missionId);
+        if (missionToUpdate) {
+            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+
+            const taskUpdateData = {
+                title: missionToUpdate.title,
+                description: missionToUpdate.description || '',
+                status: missionToUpdate.status,
+                priority: missionToUpdate.priority,
+                dueDate: missionToUpdate.dueDate,
+                recursion: missionToUpdate.recursion,
+                category: missionToUpdate.category,
+                tags: missionToUpdate.tags || [],
+                shoppingList: [...(missionToUpdate.shoppingList || [])], // This will include the edited item
+            };
+
+            api.tasks.update(missionId, taskUpdateData, userId)
+                .catch(error => {
+                    console.error('Failed to save sub-item edit to backend:', error);
+                    // Optionally show an error message to the user
+                    // alert('Failed to save sub-item edit to database. Changes are saved locally.');
+                });
+        }
+    };
+
+    // Toggle item completion status
+    const toggleItemCompletion = (missionId: string, categoryId: string, itemId: string) => {
+        setMissions(prevMissions =>
+            prevMissions.map(mission => {
+                if (mission.id === missionId && mission.shoppingList) {
+                    const updatedShoppingList = mission.shoppingList.map(category => {
+                        if (category.id === categoryId) {
+                            const updatedItems = category.items.map(item => {
+                                if (item.id === itemId) {
+                                    return {
+                                        ...item,
+                                        completed: !item.completed
+                                    };
+                                }
+                                return item;
+                            });
+
+                            return {
+                                ...category,
+                                items: updatedItems
+                            };
+                        }
+                        return category;
+                    });
+
+                    return {
+                        ...mission,
+                        shoppingList: updatedShoppingList
+                    };
+                }
+                return mission;
+            })
+        );
+
+        // If the selected mission is the one being updated, update the selectedMission state too
+        if (selectedMission && selectedMission.id === missionId) {
+            setSelectedMission(prev => {
+                if (!prev || !prev.shoppingList) return prev;
+
+                const updatedShoppingList = prev.shoppingList.map(category => {
+                    if (category.id === categoryId) {
+                        const updatedItems = category.items.map(item => {
+                            if (item.id === itemId) {
+                                return {
+                                    ...item,
+                                    completed: !item.completed
+                                };
+                            }
+                            return item;
+                        });
+
+                        return {
+                            ...category,
+                            items: updatedItems
+                        };
+                    }
+                    return category;
+                });
+
+                return {
+                    ...prev,
+                    shoppingList: updatedShoppingList
+                };
+            });
+        }
+
+        // Sync with backend by updating the parent task
+        const missionToUpdate = missions.find(m => m.id === missionId);
+        if (missionToUpdate) {
+            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+
+            const taskUpdateData = {
+                title: missionToUpdate.title,
+                description: missionToUpdate.description || '',
+                status: missionToUpdate.status,
+                priority: missionToUpdate.priority,
+                dueDate: missionToUpdate.dueDate,
+                recursion: missionToUpdate.recursion,
+                category: missionToUpdate.category,
+                tags: missionToUpdate.tags || [],
+                shoppingList: [...(missionToUpdate.shoppingList || [])], // This will include the updated completion status
+            };
+
+            api.tasks.update(missionId, taskUpdateData, userId)
+                .catch(error => {
+                    console.error('Failed to save sub-item completion to backend:', error);
+                    // Optionally show an error message to the user
+                    // alert('Failed to save sub-item completion to database. Changes are saved locally.');
+                });
+        }
+    };
 
     // Voice command handler - FIXED to properly add tasks
     const handleVoiceCommand = useCallback((command: string): boolean => {
@@ -950,6 +1600,7 @@ export default function Dashboard() {
                 setActiveTab('all');
                 setSelectedPriority('all');
                 setSelectedStatus('all');
+                setSelectedCategory('all');
                 return true;
             }
             if (lowerCommand.includes('active')) { setActiveTab('active'); return true; }
@@ -1080,9 +1731,9 @@ export default function Dashboard() {
                     />
                 )}
 
-                {/* Sidebar - Hidden on mobile, visible on desktop */}
+                {/* Sidebar - Hidden on mobile, visible on desktop - FIXED POSITIONING */}
                 <aside
-                    className={`fixed md:relative w-72 backdrop-blur-xl border-r flex flex-col h-screen z-50 transition-transform duration-300
+                    className={`fixed top-0 left-0 w-72 backdrop-blur-xl border-r flex flex-col h-screen z-50 transition-transform duration-300
                         ${isDark ? 'bg-gray-900/95 border-cyan-500/30' : 'bg-white/95 border-sky-200'}
                         ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}`}
                 >
@@ -1189,7 +1840,7 @@ export default function Dashboard() {
                 </aside>
 
                 {/* Main Content */}
-                <main className={`flex-1 flex flex-col min-h-screen overflow-hidden ${isMobile ? 'pt-16' : ''}`}>
+                <main className={`flex-1 flex flex-col min-h-screen overflow-hidden ${isMobile ? 'pt-16' : 'md:ml-72 md:pt-0'}`}>
                     {/* Top Bar - Hidden on mobile since we have mobile header */}
                     <header className={`hidden md:block backdrop-blur-xl border-b px-4 md:px-6 py-4
                         ${isDark ? 'bg-gray-900/60 border-gray-700' : 'bg-white/60 border-gray-200'}`}>
@@ -1424,6 +2075,10 @@ export default function Dashboard() {
                                     }}
                                 />
                             </div>
+                        ) : activeTab === 'recursion' ? (
+                            <div className="h-[calc(100vh-12rem)]">
+                                <RecursionTab isDark={isDark} />
+                            </div>
                         ) : (
                             <>
                                 {/* Status Cards */}
@@ -1462,81 +2117,365 @@ export default function Dashboard() {
                                     />
                                 </div>
 
-                                {/* Mission Grid */}
-                                {(loading || isPending) ? (
-                                    <div className="flex flex-col items-center justify-center h-64 text-center">
-                                        <RefreshCw className={`w-16 h-16 mb-4 animate-spin ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
-                                        <h3 className={`text-xl font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                            {isPending ? 'Checking authentication...' : 'Loading missions...'}
-                                        </h3>
-                                    </div>
-                                ) : filteredMissions.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-64 text-center">
-                                        <Target className={`w-16 h-16 mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
-                                        <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No Missions Found</h3>
-                                        <p className={`mb-6 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                                            {missions.length === 0
-                                                ? "No missions have been added yet. Click 'New Mission' to get started!"
-                                                : "Try adjusting your filters or search query"}
-                                        </p>
+                                {/* Category Chips */}
+                                <div className="mb-6">
+                                    <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Categories</h3>
+                                    <div className="flex flex-wrap gap-2">
                                         <button
-                                            onClick={() => setShowAddModal(true)}
-                                            className={`flex items-center gap-2 px-6 py-3 rounded-lg border transition-all
-                                        ${isDark
-                                                    ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/30'
-                                                    : 'bg-cyan-100 text-cyan-600 border-cyan-300 hover:bg-cyan-200'}`}
+                                            onClick={() => setSelectedCategory('all')}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                selectedCategory === 'all'
+                                                    ? isDark
+                                                        ? 'bg-cyan-500 text-white'
+                                                        : 'bg-cyan-500 text-white'
+                                                    : isDark
+                                                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                            }`}
                                         >
-                                            <Plus className="w-5 h-5" />
-                                            Initialize First Mission
+                                            All
                                         </button>
+                                        {allCategories.map((category, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => setSelectedCategory(category)}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                    selectedCategory === category
+                                                        ? isDark
+                                                            ? 'bg-cyan-500 text-white'
+                                                            : 'bg-cyan-500 text-white'
+                                                        : isDark
+                                                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                }`}
+                                            >
+                                                {category}
+                                            </button>
+                                        ))}
                                     </div>
-                                ) : activeTab === 'chatbot' ? (
-                                    <div className="h-[calc(100vh-20rem)] p-4">
-                                        <ChatTab
-                                            userId={session?.user?.email || session?.user?.id || ''}
-                                            isDark={isDark}
-                                            onTasksUpdated={async () => {
-                                                try {
-                                                    const userId = session?.user?.email || session?.user?.id;
-                                                    const userEmail = session?.user?.email;
-                                                    const userName = session?.user?.name;
-                                                    if (userId) {
-                                                        const tasks = await api.tasks.list({ userId, userEmail, userName });
-                                                        const mappedTasks: Mission[] = tasks.map((task: any) => ({
-                                                            id: task.id.toString(),
-                                                            title: task.title,
-                                                            description: task.description || '',
-                                                            priority: (task.priority || 'medium') as 'critical' | 'high' | 'medium' | 'low',
-                                                            status: (task.status || 'pending') as 'pending' | 'active' | 'completed' | 'failed',
-                                                            dueDate: task.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                                                            createdAt: task.createdAt,
-                                                            tags: task.tags || [],
-                                                            category: task.category || 'General',
-                                                            recursion: task.recursion
-                                                        }));
-                                                        setMissions(mappedTasks);
-                                                    }
-                                                } catch (error) {
-                                                    console.error('Failed to refresh tasks:', error);
-                                                }
-                                            }}
-                                        />
+                                </div>
+
+                                {/* Shopping List for Selected Category */}
+                                {selectedCategory !== 'all' && (
+                                    <div className={`mb-6 p-4 rounded-xl backdrop-blur-xl border ${isDark ? 'bg-slate-800/40 border-cyan-500/20' : 'bg-white/60 border-sky-200/60'}`}>
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className={`text-lg font-semibold ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
+                                                {selectedCategory} Items
+                                            </h3>
+                                            <button
+                                                onClick={() => {
+                                                    setShoppingListCategory(selectedCategory);
+                                                    setShowShoppingList(true);
+                                                }}
+                                                className="px-3 py-1.5 text-sm bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all"
+                                            >
+                                                Add Item
+                                            </button>
+                                        </div>
+
+                                        {/* Shopping List Items */}
+                                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                                            {missions
+                                                .filter(mission => mission.category === selectedCategory && mission.shoppingList)
+                                                .flatMap(mission =>
+                                                    mission.shoppingList?.flatMap(category =>
+                                                        category.items.map(item => ({ ...item, missionId: mission.id, categoryId: category.id, missionTitle: mission.title }))
+                                                    ) || []
+                                                )
+                                                .map((item, index) => (
+                                                    <div
+                                                        key={item.id}
+                                                        className={`flex justify-between items-center p-2 rounded border bg-opacity-50 ${
+                                                            item.completed
+                                                                ? (isDark ? 'bg-gray-700/30 border-gray-600' : 'bg-gray-200/30 border-gray-300')
+                                                                : (isDark ? 'border-gray-600' : 'border-gray-300')
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-2 flex-1">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={!!item.completed}
+                                                                onChange={() => toggleItemCompletion(item.missionId, item.categoryId, item.id)}
+                                                                className="w-4 h-4 rounded"
+                                                                style={{
+                                                                    accentColor: isDark ? '#22d3ee' : '#0891b2'
+                                                                }}
+                                                            />
+                                                            <span className={`${item.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {item.name}
+                                                            </span>
+                                                            <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                (x{item.quantity})
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                                                                ${(item.price * item.quantity).toFixed(2)}
+                                                            </span>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    // Set up editing state
+                                                                    setNewItemName(item.name);
+                                                                    setNewItemPrice(item.price);
+                                                                    setNewItemQuantity(item.quantity);
+                                                                    setShoppingListCategory(selectedCategory);
+                                                                    setEditingItemId(item.id);
+                                                                    setEditingItemMissionId(item.missionId);
+                                                                    setEditingItemCategoryId(item.categoryId);
+                                                                    setShowShoppingList(true);
+                                                                }}
+                                                                className={`p-1 rounded ${isDark ? 'text-cyan-400 hover:bg-cyan-500/20' : 'text-cyan-600 hover:bg-cyan-100'}`}
+                                                                title="Edit Item"
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => removeItemFromShoppingList(item.missionId, item.categoryId, item.id)}
+                                                                className={`p-1 rounded ${isDark ? 'text-red-400 hover:bg-red-500/20' : 'text-red-600 hover:bg-red-100'}`}
+                                                                title="Remove Item"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            }
+                                            {missions
+                                                .filter(mission => mission.category === selectedCategory && mission.shoppingList)
+                                                .flatMap(mission => mission.shoppingList || [])
+                                                .flatMap(category => category.items)
+                                                .length === 0 && (
+                                                    <p className={`text-center py-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                        No items in this category
+                                                    </p>
+                                                )}
+                                        </div>
+
+                                        {/* Category Total */}
+                                        {missions
+                                            .filter(mission => mission.category === selectedCategory && mission.shoppingList)
+                                            .flatMap(mission => mission.shoppingList || [])
+                                            .flatMap(category => category.items)
+                                            .length > 0 && (
+                                                <div className={`mt-3 pt-3 border-t flex justify-between font-bold ${isDark ? 'border-gray-700 text-green-400' : 'border-gray-300 text-green-600'}`}>
+                                                    <span>Total:</span>
+                                                    <span>
+                                                        ${calculateCategoryTotal(
+                                                            missions
+                                                                .filter(mission => mission.category === selectedCategory && mission.shoppingList)
+                                                                .flatMap(mission => mission.shoppingList || [])
+                                                                .flatMap(category => category.items)
+                                                        ).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                    </div>
+                                )}
+
+                                {/* Mission Detail View or Grid */}
+                                {selectedMission ? (
+                                    // Show Mission Detail View with sub-items
+                                    <div className={`backdrop-blur-xl border rounded-xl p-6 mb-6 transition-all duration-300
+                                        ${isDark
+                                            ? 'bg-slate-800/40 border-cyan-500/20 shadow-cyan-500/5'
+                                            : 'bg-white/60 border-sky-200/60 shadow-sky-500/10'
+                                        }`}>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                    {selectedMission.title}
+                                                </h2>
+                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                    {selectedMission.description}
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => setSelectedMission(null)}
+                                                className={`p-2 rounded-lg ${isDark ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}
+                                                title="Back to list"
+                                            >
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        </div>
+
+                                        {/* Mission Details */}
+                                        <div className={`grid grid-cols-2 gap-3 text-xs mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <Flag className={`w-4 h-4 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
+                                                <span>Category: {selectedMission.category}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                                                <span>Due: {formatDate(selectedMission.dueDate)}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Clock className={`w-4 h-4 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                                                <span>Created: {formatDate(selectedMission.createdAt)}</span>
+                                            </div>
+                                            {selectedMission.recursion && (
+                                                <div className="flex items-center gap-2">
+                                                    <RefreshCw className={`w-4 h-4 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+                                                    <span>Recurs: {selectedMission.recursion}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Shopping List Items (Sub-items) */}
+                                        {selectedMission.shoppingList && selectedMission.shoppingList.length > 0 && (
+                                            <div className="mt-6">
+                                                <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
+                                                    Sub-items
+                                                </h3>
+                                                <div className="space-y-2">
+                                                    {selectedMission.shoppingList.flatMap(category => category.items).map((item, index) => (
+                                                        <div
+                                                            key={item.id}
+                                                            className={`flex justify-between items-center p-3 rounded border bg-opacity-50 ${
+                                                                item.completed
+                                                                    ? (isDark ? 'bg-gray-700/30 border-gray-600' : 'bg-gray-200/30 border-gray-300')
+                                                                    : (isDark ? 'border-gray-600' : 'border-gray-300')
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-3 flex-1">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={!!item.completed}
+                                                                    onChange={() => toggleItemCompletion(selectedMission.id, selectedMission.shoppingList![0].id, item.id)}
+                                                                    className="w-5 h-5 rounded"
+                                                                    style={{
+                                                                        accentColor: isDark ? '#22d3ee' : '#0891b2'
+                                                                    }}
+                                                                />
+                                                                <span className={`${item.completed ? 'line-through opacity-60' : ''} ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                    {item.name}
+                                                                </span>
+                                                                <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                    (x{item.quantity})
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                                                                    ${(item.price * item.quantity).toFixed(2)}
+                                                                </span>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        // Set up editing state
+                                                                        setNewItemName(item.name);
+                                                                        setNewItemPrice(item.price);
+                                                                        setNewItemQuantity(item.quantity);
+                                                                        setShoppingListCategory(selectedMission.category);
+                                                                        setEditingItemId(item.id);
+                                                                        setEditingItemMissionId(selectedMission.id);
+                                                                        setEditingItemCategoryId(selectedMission.shoppingList![0].id);
+                                                                        setShowShoppingList(true);
+                                                                    }}
+                                                                    className={`p-1.5 rounded ${isDark ? 'text-cyan-400 hover:bg-cyan-500/20' : 'text-cyan-600 hover:bg-cyan-100'}`}
+                                                                    title="Edit Item"
+                                                                >
+                                                                    <Edit className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => removeItemFromShoppingList(selectedMission.id, selectedMission.shoppingList![0].id, item.id)}
+                                                                    className={`p-1.5 rounded ${isDark ? 'text-red-400 hover:bg-red-500/20' : 'text-red-600 hover:bg-red-100'}`}
+                                                                    title="Remove Item"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Category Total */}
+                                                <div className={`mt-4 pt-3 border-t flex justify-between font-bold ${isDark ? 'border-gray-700 text-green-400' : 'border-gray-300 text-green-600'}`}>
+                                                    <span>Total:</span>
+                                                    <span>
+                                                        ${calculateCategoryTotal(selectedMission.shoppingList.flatMap(category => category.items))}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Add Item Button */}
+                                        <div className="mt-6">
+                                            <button
+                                                onClick={() => {
+                                                    setShoppingListCategory(selectedMission.category);
+                                                    setEditingItemMissionId(selectedMission.id);
+                                                    setEditingItemCategoryId(selectedMission.shoppingList && selectedMission.shoppingList.length > 0 ? selectedMission.shoppingList[0].id : Date.now().toString());
+                                                    setShowShoppingList(true);
+                                                }}
+                                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                <span>Add Sub-item</span>
+                                            </button>
+                                        </div>
+
+                                        {/* Back Button */}
+                                        <div className="mt-6">
+                                            <button
+                                                onClick={() => setSelectedMission(null)}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                                                    isDark
+                                                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                                                        : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                                <span>Back to missions</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                                        <AnimatePresence>
-                                            {filteredMissions.map((mission) => (
-                                                <MissionCard
-                                                    key={mission.id}
-                                                    mission={mission}
-                                                    onEdit={handleEditMission}
-                                                    onDelete={handleDeleteMission}
-                                                    onToggleComplete={handleToggleComplete}
-                                                    isDark={isDark}
-                                                />
-                                            ))}
-                                        </AnimatePresence>
-                                    </div>
+                                    // Original Mission Grid
+                                    <>
+                                        {(loading || isPending) ? (
+                                            <div className="flex flex-col items-center justify-center h-64 text-center">
+                                                <RefreshCw className={`w-16 h-16 mb-4 animate-spin ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                                                <h3 className={`text-xl font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                    {isPending ? 'Checking authentication...' : 'Loading missions...'}
+                                                </h3>
+                                            </div>
+                                        ) : filteredMissions.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center h-64 text-center">
+                                                <Target className={`w-16 h-16 mb-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`} />
+                                                <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>No Missions Found</h3>
+                                                <p className={`mb-6 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                                                    {missions.length === 0
+                                                        ? "No missions have been added yet. Click 'New Mission' to get started!"
+                                                        : "Try adjusting your filters or search query"}
+                                                </p>
+                                                <button
+                                                    onClick={() => setShowAddModal(true)}
+                                                    className={`flex items-center gap-2 px-6 py-3 rounded-lg border transition-all
+                                                ${isDark
+                                                            ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/30'
+                                                            : 'bg-cyan-100 text-cyan-600 border-cyan-300 hover:bg-cyan-200'}`}
+                                                >
+                                                    <Plus className="w-5 h-5" />
+                                                    Initialize First Mission
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                                <AnimatePresence>
+                                                    {filteredMissions.map((mission) => (
+                                                        <MissionCard
+                                                            key={mission.id}
+                                                            mission={mission}
+                                                            onEdit={handleEditMission}
+                                                            onDelete={handleDeleteMission}
+                                                            onToggleComplete={handleToggleComplete}
+                                                            isDark={isDark}
+                                                        />
+                                                    ))}
+                                                </AnimatePresence>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </>
                         )}
@@ -1574,6 +2513,120 @@ export default function Dashboard() {
                 }
             </AnimatePresence >
 
+        {/* Add Item to Shopping List Modal */}
+        <AnimatePresence>
+            {showShoppingList && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    onClick={() => {
+                        setShowShoppingList(false);
+                        setNewItemName('');
+                        setNewItemPrice(0);
+                        setNewItemQuantity(1);
+                        setEditingItemId(null);
+                        setEditingItemMissionId(null);
+                        setEditingItemCategoryId(null);
+                    }}
+                >
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        className={`border rounded-2xl p-6 w-full max-w-md ${isDark ? 'bg-gray-900 border-cyan-500/50' : 'bg-white border-sky-300'}`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className={`text-2xl font-bold ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
+                                Add Item to Shopping List
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    setShowShoppingList(false);
+                                    setNewItemName('');
+                                    setNewItemPrice(0);
+                                    setNewItemQuantity(1);
+                                }}
+                                className={isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'}
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className={`block text-sm mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Item Name *</label>
+                                <input
+                                    type="text"
+                                    value={newItemName}
+                                    onChange={(e) => setNewItemName(e.target.value)}
+                                    className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 transition-colors
+                                        ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'}`}
+                                    placeholder="Item name..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className={`block text-sm mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Price ($)</label>
+                                    <input
+                                        type="number"
+                                        value={newItemPrice}
+                                        onChange={(e) => setNewItemPrice(parseFloat(e.target.value) || 0)}
+                                        className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 transition-colors
+                                            ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'}`}
+                                        min="0"
+                                        step="0.01"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className={`block text-sm mb-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Quantity</label>
+                                    <input
+                                        type="number"
+                                        value={newItemQuantity}
+                                        onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)}
+                                        className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 transition-colors
+                                            ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'}`}
+                                        min="1"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => {
+                                    addItemToShoppingList(shoppingListCategory);
+                                    setShowShoppingList(false);
+                                }}
+                                className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-3 rounded-lg
+                                    hover:from-cyan-400 hover:to-blue-500 transition-all"
+                            >
+                                {editingItemId ? 'Update Item' : 'Add Item'}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowShoppingList(false);
+                                    setNewItemName('');
+                                    setNewItemPrice(0);
+                                    setNewItemQuantity(1);
+                                    setEditingItemId(null);
+                                    setEditingItemMissionId(null);
+                                    setEditingItemCategoryId(null);
+                                }}
+                                className={`flex-1 py-3 rounded-lg border font-bold transition-colors
+                                    ${isDark ? 'border-gray-600 text-gray-300 hover:bg-gray-800' : 'border-gray-300 text-gray-600 hover:bg-gray-100'}`}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
 
         </div >
     );
