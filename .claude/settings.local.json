@@ -245,7 +245,10 @@
       "Bash(minikube image load todo-mcp-server:v1)",
       "Bash(minikube image load todo-mcp-server:v1 -p minikube)",
       "Bash(minikube ssh -- docker images)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(npm ci)",
+      "Bash(npm audit)",
+      "Bash(npm audit fix)"
     ]
   }
 }
