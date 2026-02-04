@@ -19,6 +19,34 @@ export interface User {
   name?: string
 }
 
+export interface Item {
+  id: string
+  name: string
+  price: number
+  quantity: number
+  completed?: boolean
+}
+
+export interface Category {
+  id: string
+  name: string
+  items: Item[]
+}
+
+export interface Mission {
+  id: string
+  title: string
+  description: string
+  priority: 'critical' | 'high' | 'medium' | 'low'
+  status: 'pending' | 'active' | 'completed' | 'failed'
+  dueDate: string
+  createdAt: string
+  tags: string[]
+  category: string
+  recursion?: string
+  shoppingList?: Category[]
+}
+
 export interface SyncOperation {
   id: string
   operation: 'create' | 'update' | 'delete'

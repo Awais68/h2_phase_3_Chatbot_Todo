@@ -330,7 +330,6 @@ const MissionCard = ({
                     ? 'bg-slate-800/40 border-cyan-500/20 hover:border-cyan-400/40 shadow-cyan-500/5'
                     : 'bg-white/60 border-sky-200/60 hover:border-sky-300/80 shadow-sky-500/10'
                 }`}
-            onClick={() => handleMissionCardClick(mission)}
         >
             {/* Checkbox for Mark as Complete */}
             <div className="absolute top-3 left-3 flex items-center gap-2">
@@ -463,10 +462,6 @@ const MissionCard = ({
             {/* Open Button */}
             <div className="mt-4 pt-3 border-t border-gray-300 border-opacity-30">
                 <button
-                    onClick={(e) => {
-                        e.stopPropagation(); // Prevent triggering the card click
-                        handleMissionCardClick(mission, e);
-                    }}
                     className={`w-full py-2 text-sm rounded-lg border transition-all ${
                         isDark
                             ? 'border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10'
@@ -738,6 +733,20 @@ export default function Dashboard() {
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
     const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
 
+    // Handle mission card click to expand sub-items
+    const handleMissionCardClick = useCallback((mission: Mission) => {
+        setSelectedMission(selectedMission?.id === mission.id ? null : mission);
+        
+        // Expand shopping list if it has items
+        if (mission.shoppingList && mission.shoppingList.length > 0) {
+            const expandedState: Record<string, boolean> = {};
+            mission.shoppingList.forEach(category => {
+                expandedState[category.id] = true;
+            });
+            setExpandedCategories(expandedState);
+        }
+    }, [selectedMission]);
+
     // Fetch tasks from API on mount
     useEffect(() => {
         const fetchTasks = async () => {
@@ -753,8 +762,8 @@ export default function Dashboard() {
                 // Check authentication
                 if (!isAuthenticated) {
                     console.log('Not authenticated - showing empty dashboard');
-                    // Even when not authenticated, we can show mock data for demonstration
-                    setMissions(mockMissions);
+                    // Show empty missions when not authenticated
+                    setMissions([]);
                     setLoading(false);
                     return;
                 }
@@ -772,8 +781,8 @@ export default function Dashboard() {
 
                 if (!userId) {
                     console.error('No userId found in session');
-                    // Use mock data if no user ID found
-                    setMissions(mockMissions);
+                    // Show empty missions if no user ID found
+                    setMissions([]);
                     setLoading(false);
                     return;
                 }
@@ -800,14 +809,14 @@ export default function Dashboard() {
                     }));
                     setMissions(mappedTasks);
                 } catch (apiError) {
-                    console.warn('Failed to fetch tasks from backend, using mock data:', apiError);
-                    // Fallback to mock data if API fails
-                    setMissions(mockMissions);
+                    console.warn('Failed to fetch tasks from backend:', apiError);
+                    // Show empty missions if API fails
+                    setMissions([]);
                 }
             } catch (error) {
                 console.error('Unexpected error in fetchTasks:', error);
-                // Use mock data as ultimate fallback
-                setMissions(mockMissions);
+                // Show empty missions on error
+                setMissions([]);
             } finally {
                 setLoading(false);
             }
@@ -859,8 +868,8 @@ export default function Dashboard() {
     // Extract unique categories from missions
     const uniqueCategories = Array.from(new Set(missions.map(mission => mission.category)));
 
-    // Combine system categories with mission categories to show all
-    const allCategories = Array.from(new Set([...systemCategories, ...uniqueCategories]));
+    // Show only user-created categories from missions, not system categories
+    const allCategories = uniqueCategories.sort();
 
     // Mission tabs with dynamic counts
     const missionTabs: MissionTab[] = [
@@ -1017,14 +1026,6 @@ export default function Dashboard() {
     // Handle mission selection to show details
     const handleMissionClick = useCallback((mission: Mission) => {
         // Set the selected mission to show its details
-        setSelectedMission(mission);
-    }, []);
-
-    // Handle mission click from card (separate function to avoid conflicts)
-    const handleMissionCardClick = useCallback((mission: Mission, e?: React.MouseEvent) => {
-        if (e) {
-            e.stopPropagation(); // Stop event propagation if it's a click event
-        }
         setSelectedMission(mission);
     }, []);
 
@@ -2463,14 +2464,91 @@ export default function Dashboard() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                                                 <AnimatePresence>
                                                     {filteredMissions.map((mission) => (
-                                                        <MissionCard
-                                                            key={mission.id}
-                                                            mission={mission}
-                                                            onEdit={handleEditMission}
-                                                            onDelete={handleDeleteMission}
-                                                            onToggleComplete={handleToggleComplete}
-                                                            isDark={isDark}
-                                                        />
+                                                        <div key={mission.id}>
+                                                            <MissionCard
+                                                                mission={mission}
+                                                                onEdit={handleEditMission}
+                                                                onDelete={handleDeleteMission}
+                                                                onToggleComplete={handleToggleComplete}
+                                                                isDark={isDark}
+                                                            />
+                                                            
+                                                            {/* Expanded Sub-items View */}
+                                                            <AnimatePresence>
+                                                                {selectedMission && (selectedMission as Mission).id === mission.id && mission.shoppingList && mission.shoppingList.length > 0 && (
+                                                                    <motion.div
+                                                                        initial={{ opacity: 0, height: 0 }}
+                                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                                        exit={{ opacity: 0, height: 0 }}
+                                                                        className={`mt-4 p-4 rounded-lg border backdrop-blur-xl ${
+                                                                            isDark
+                                                                                ? 'bg-slate-800/40 border-cyan-500/30'
+                                                                                : 'bg-white/60 border-sky-200/60'
+                                                                        }`}
+                                                                    >
+                                                                        <h4 className={`font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-cyan-300' : 'text-cyan-600'}`}>
+                                                                            <ChevronLeft className="w-4 h-4" /> Sub-items
+                                                                        </h4>
+                                                                        <div className="space-y-2">
+                                                                            {mission.shoppingList.map((category) => (
+                                                                                <div key={category.id}>
+                                                                                    <button
+                                                                                        onClick={() => setExpandedCategories(prev => ({
+                                                                                            ...prev,
+                                                                                            [category.id]: !prev[category.id]
+                                                                                        }))}
+                                                                                        className={`flex items-center gap-2 w-full p-2 rounded transition-colors ${
+                                                                                            isDark
+                                                                                                ? 'hover:bg-cyan-500/10 text-cyan-300'
+                                                                                                : 'hover:bg-sky-100 text-sky-600'
+                                                                                        }`}
+                                                                                    >
+                                                                                        <ChevronLeft className={`w-4 h-4 transition-transform ${expandedCategories[category.id] ? 'rotate-90' : ''}`} />
+                                                                                        <span className="font-medium">{category.name}</span>
+                                                                                    </button>
+                                                                                    
+                                                                                    <AnimatePresence>
+                                                                                        {expandedCategories[category.id] && (
+                                                                                            <motion.div
+                                                                                                initial={{ opacity: 0, height: 0 }}
+                                                                                                animate={{ opacity: 1, height: 'auto' }}
+                                                                                                exit={{ opacity: 0, height: 0 }}
+                                                                                                className="ml-4 space-y-2 mt-2"
+                                                                                            >
+                                                                                                {category.items.map((item) => (
+                                                                                                    <div
+                                                                                                        key={item.id}
+                                                                                                        className={`p-2 rounded border flex justify-between items-center text-sm ${
+                                                                                                            isDark
+                                                                                                                ? 'bg-gray-700/50 border-gray-600 text-gray-300'
+                                                                                                                : 'bg-gray-100 border-gray-200 text-gray-700'
+                                                                                                        }`}
+                                                                                                    >
+                                                                                                        <div className="flex-1">
+                                                                                                            <div className={item.completed ? 'line-through opacity-50' : ''}>
+                                                                                                                {item.name}
+                                                                                                            </div>
+                                                                                                            <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                                                                                {item.quantity}x @ ${item.price.toFixed(2)}
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                        <input
+                                                                                                            type="checkbox"
+                                                                                                            checked={item.completed || false}
+                                                                                                            className="w-4 h-4"
+                                                                                                        />
+                                                                                                    </div>
+                                                                                                ))}
+                                                                                            </motion.div>
+                                                                                        )}
+                                                                                    </AnimatePresence>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </motion.div>
+                                                                )}
+                                                            </AnimatePresence>
+                                                        </div>
                                                     ))}
                                                 </AnimatePresence>
                                             </div>
