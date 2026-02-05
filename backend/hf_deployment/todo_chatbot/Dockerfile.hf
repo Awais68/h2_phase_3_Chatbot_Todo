@@ -1,0 +1,63 @@
+# syntax=docker/dockerfile:1
+
+# =========================
+# Base image
+# =========================
+FROM python:3.10-slim AS base
+
+# Install curl for healthchecks
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# =========================
+# Builder stage
+# =========================
+FROM base AS builder
+
+WORKDIR /app
+
+# Copy dependency files first for better cache utilization
+COPY --link requirements_hf.txt .
+
+# Install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements_hf.txt
+
+# =========================
+# Final image
+# =========================
+FROM base AS final
+
+WORKDIR /app
+
+# Create non-root user and group
+RUN groupadd --gid 1000 appgroup && \
+    useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python /usr/local/lib/python
+
+# Copy application code (excluding .env, .git, etc. via .dockerignore)
+COPY --link . .
+
+# Set environment variables
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=8000
+
+# Switch to non-root user
+USER appuser
+
+# Set working directory for the user
+WORKDIR /app
+
+# Expose port
+EXPOSE 8000
+
+# Healthcheck endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+
+# Start the application (PORT can be overridden at runtime)
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]

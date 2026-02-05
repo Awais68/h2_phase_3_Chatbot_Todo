@@ -1,0 +1,86 @@
+# Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE/editor settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build and distribution outputs
+dist/
+build/
+out/
+
+# Test directories and files
+test/
+tests/
+*_test.py
+
+# Debug and log files
+debug/
+*.log
+
+# Version control
+.git/
+.gitignore
+.svn/
+.hg/
+
+# Environment and secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.crt
+
+# Local and development config
+*.local.*
+config.local.*
+settings.local.*
+.local/
+local/
+
+# Documentation and markdown
+README*
+*.md
+docs/
+
+# Docker and Compose files
+.dockerignore
+Dockerfile*
+docker-compose*
+
+# Temporary and backup files
+tmp/
+temp/
+*.tmp
+*.backup
+
+# Project-specific: backup and migration versions
+backup/
+migrations/versions/
+src/db/migrations/versions/
+
+# Ignore empty __init__.py files (optional, if not needed)
+# src/**/__init__.py
+
+# Ignore mako templates (if not needed in build)
+*.mako
+
+# Ignore miscellaneous
+*.txt
+*.json
+
+# Exclude nothing else; keep all source code and necessary configs

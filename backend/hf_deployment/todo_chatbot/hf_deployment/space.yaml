@@ -1,0 +1,46 @@
+runtime:
+  huggingface: "2.4.0"
+
+python_version: "3.10"
+
+secrets:
+  - name: DATABASE_URL
+    description: "PostgreSQL database connection string"
+    required: true
+  - name: SECRET_KEY
+    description: "JWT secret key for authentication"
+    required: true
+  - name: OPENAI_API_KEY
+    description: "OpenAI API key for AI functionality"
+    required: true
+
+variables:
+  - name: APP_NAME
+    description: "Application name"
+    default: "Todo Evolution API"
+  - name: APP_VERSION
+    description: "Application version"
+    default: "2.0.0"
+  - name: DEBUG
+    description: "Debug mode"
+    default: "False"
+  - name: ALGORITHM
+    description: "JWT algorithm"
+    default: "HS256"
+  - name: ACCESS_TOKEN_EXPIRE_MINUTES
+    description: "Access token expiration in minutes"
+    default: "30"
+  - name: LOG_LEVEL
+    description: "Logging level"
+    default: "INFO"
+  - name: ENVIRONMENT
+    description: "Environment (development/production)"
+    default: "production"
+
+hardware:
+  cpu-basic: {}
+
+storage:
+  tier: large
+
+sdk: gradio
