@@ -11,6 +11,11 @@ export interface Task {
   updatedAt: string
   userId: string
   version: number
+  due_date?: string | null
+  recurrence_pattern?: 'daily' | 'weekly' | 'bi-weekly' | 'monthly' | 'yearly' | null
+  is_recurring?: boolean
+  reminder_minutes?: number | null
+  next_occurrence?: string | null
 }
 
 export interface User {

@@ -551,3 +551,189 @@ def get_productivity_hours(user_id: int, session: Session = None) -> Dict[str, A
     return {
         "productivity_by_hour": productivity
     }
+
+
+# ============================================================================
+# TASK HISTORY TOOLS (Phase 5)
+# ============================================================================
+
+@mcp_server.tool("view_task_history")
+def view_task_history(
+    user_id: int,
+    action_type: str = None,
+    search: str = None,
+    page: int = 1,
+    page_size: int = 50,
+    session: Session = None
+) -> Dict[str, Any]:
+    """
+    View task history with completed and deleted tasks.
+
+    Args:
+        user_id: The ID of the user
+        action_type: Filter by action type ('completed' or 'deleted', None for all)
+        search: Search query for task titles
+        page: Page number (1-indexed)
+        page_size: Items per page (max 100)
+        session: Database session
+
+    Returns:
+        Dict with history entries, total count, and pagination info
+    """
+    if not session:
+        session = next(get_session())
+
+    from src.services.history_service import HistoryService
+    from src.models.task_history import TaskHistoryQuery, HistoryActionType
+
+    # Validate action_type
+    if action_type and action_type not in ['completed', 'deleted']:
+        return {
+            "error": "INVALID_ACTION_TYPE",
+            "message": "action_type must be 'completed', 'deleted', or None"
+        }
+
+    # Build query
+    query = TaskHistoryQuery(
+        action_type=HistoryActionType(action_type) if action_type else None,
+        search=search,
+        page=page,
+        page_size=min(page_size, 100)
+    )
+
+    # Get history
+    entries, total = HistoryService.get_history(session, user_id, query)
+
+    # Format entries
+    history_list = []
+    for entry in entries:
+        history_list.append({
+            "history_id": entry.id,
+            "original_task_id": entry.original_task_id,
+            "title": entry.title,
+            "description": entry.description,
+            "completed": entry.completed,
+            "due_date": entry.due_date.isoformat() if entry.due_date else None,
+            "recurrence_pattern": entry.recurrence_pattern,
+            "action_type": entry.action_type.value,
+            "action_date": entry.action_date.isoformat(),
+            "can_restore": entry.can_restore,
+            "retention_until": entry.retention_until.isoformat()
+        })
+
+    total_pages = (total + page_size - 1) // page_size
+
+    return {
+        "history": history_list,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages
+    }
+
+
+@mcp_server.tool("restore_deleted_task")
+def restore_deleted_task(
+    user_id: int,
+    history_id: int,
+    session: Session = None
+) -> Dict[str, Any]:
+    """
+    Restore a deleted task from history.
+
+    Only works for deleted tasks (action_type='deleted', can_restore=True).
+    Completed tasks cannot be restored.
+
+    Args:
+        user_id: The ID of the user
+        history_id: History entry ID to restore from
+        session: Database session
+
+    Returns:
+        Dict with restored task details or error
+    """
+    if not session:
+        session = next(get_session())
+
+    from src.services.history_service import HistoryService
+
+    try:
+        restored_task = HistoryService.restore_deleted_task(
+            session, history_id, user_id
+        )
+    except ValueError as e:
+        return {
+            "error": "CANNOT_RESTORE",
+            "message": str(e)
+        }
+
+    if not restored_task:
+        return {
+            "error": "NOT_FOUND",
+            "message": f"History entry {history_id} not found or already restored"
+        }
+
+    return {
+        "task_id": restored_task.id,
+        "title": restored_task.title,
+        "description": restored_task.description,
+        "completed": restored_task.completed,
+        "due_date": restored_task.due_date.isoformat() if restored_task.due_date else None,
+        "recurrence_pattern": restored_task.recurrence_pattern.value if restored_task.recurrence_pattern else None,
+        "message": "Task restored successfully"
+    }
+
+
+@mcp_server.tool("search_history")
+def search_history(
+    user_id: int,
+    search_query: str,
+    page: int = 1,
+    page_size: int = 50,
+    session: Session = None
+) -> Dict[str, Any]:
+    """
+    Search task history by title using full-text search.
+
+    Args:
+        user_id: The ID of the user
+        search_query: Search query string
+        page: Page number (1-indexed)
+        page_size: Items per page (max 100)
+        session: Database session
+
+    Returns:
+        Dict with matching history entries and pagination info
+    """
+    if not session:
+        session = next(get_session())
+
+    from src.services.history_service import HistoryService
+
+    # Search history
+    entries, total = HistoryService.search_history(
+        session, user_id, search_query, page, min(page_size, 100)
+    )
+
+    # Format entries
+    history_list = []
+    for entry in entries:
+        history_list.append({
+            "history_id": entry.id,
+            "original_task_id": entry.original_task_id,
+            "title": entry.title,
+            "description": entry.description,
+            "action_type": entry.action_type.value,
+            "action_date": entry.action_date.isoformat(),
+            "can_restore": entry.can_restore
+        })
+
+    total_pages = (total + page_size - 1) // page_size
+
+    return {
+        "history": history_list,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages
+    }

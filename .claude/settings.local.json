@@ -248,7 +248,8 @@
       "Bash(npm run build)",
       "Bash(npm ci)",
       "Bash(npm audit)",
-      "Bash(npm audit fix)"
+      "Bash(npm audit fix)",
+      "Bash(curl:*)"
     ]
   }
 }

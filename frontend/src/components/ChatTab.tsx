@@ -6,11 +6,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 import { useVoiceOutput } from '@/hooks/useVoiceOutput';
+import { formatDueDateForChat } from '@/utils/dateUtils';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  dueDate?: string | null;
+  taskCreated?: boolean;
 }
 
 interface ChatTabProps {
@@ -81,11 +84,27 @@ export default function ChatTab({ userId, isDark = false, onTasksUpdated }: Chat
         setConversationId(data.conversation_id);
       }
 
+      // Extract due date from tool calls if task was created with due date
+      let dueDate: string | null = null;
+      let taskCreated = false;
+
+      if (data.tool_calls && Array.isArray(data.tool_calls)) {
+        const taskCreationCall = data.tool_calls.find(
+          (call: any) => call.name === 'add_task_with_due_date'
+        );
+        if (taskCreationCall?.result) {
+          dueDate = taskCreationCall.result.due_date || null;
+          taskCreated = true;
+        }
+      }
+
       // Add assistant response
       const assistantMessage: Message = {
         role: 'assistant',
         content: data.response,
-        timestamp: new Date()
+        timestamp: new Date(),
+        dueDate,
+        taskCreated,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -172,6 +191,17 @@ export default function ChatTab({ userId, isDark = false, onTasksUpdated }: Chat
                 }`}
             >
               <p className="whitespace-pre-wrap">{message.content}</p>
+
+              {/* Display due date if task was created with one */}
+              {message.taskCreated && message.dueDate && (
+                <div className={`mt-2 pt-2 border-t text-xs ${
+                  isDark ? 'border-cyan-500/30' : 'border-gray-300'
+                }`}>
+                  <span className="font-semibold">📅 Due: </span>
+                  {formatDueDateForChat(message.dueDate)}
+                </div>
+              )}
+
               <p className="text-xs mt-1 opacity-70">
                 {message.timestamp.toLocaleTimeString()}
               </p>

@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import { useSwipeable } from 'react-swipeable'
 import { motion, useAnimation } from 'framer-motion'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Clock, Calendar } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Task } from '@/types'
 import { cn } from '@/lib/utils'
+import { getDueDateStatus, formatDueDate } from '@/utils/dateUtils'
 
 /**
  * Props for TaskCard component
@@ -81,6 +82,9 @@ export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
     })
   }
 
+  // Get due date status for styling
+  const dueDateInfo = getDueDateStatus(task.due_date);
+
   return (
     <div className="relative overflow-hidden rounded-xl">
       {/* Swipe background indicators */}
@@ -107,7 +111,8 @@ export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
       >
         <Card className={cn(
           "p-4 touch-pan-y",
-          task.completed && "opacity-60"
+          task.completed && "opacity-60",
+          dueDateInfo.status && dueDateInfo.borderColor
         )}>
           <div className="flex items-start space-x-3">
             {/* Checkbox - 44x44px touch target */}
@@ -136,6 +141,21 @@ export function TaskCard({ task, onToggleComplete, onDelete }: TaskCardProps) {
                   {task.description}
                 </p>
               )}
+
+              {/* Due Date Indicator */}
+              {task.due_date && dueDateInfo.status && (
+                <div className={cn(
+                  "inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium",
+                  dueDateInfo.color,
+                  dueDateInfo.bgColor
+                )}>
+                  {dueDateInfo.status === 'overdue' && <Clock className="h-3 w-3" />}
+                  {dueDateInfo.status === 'due_today' && <Calendar className="h-3 w-3" />}
+                  {dueDateInfo.status === 'upcoming' && <Calendar className="h-3 w-3" />}
+                  <span>{dueDateInfo.displayText}</span>
+                </div>
+              )}
+
               <p className="text-xs text-muted-foreground pt-1">
                 {formatDate(task.updatedAt)}
               </p>

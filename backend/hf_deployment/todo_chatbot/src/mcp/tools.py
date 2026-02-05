@@ -1,13 +1,16 @@
 """
 MCP Tools for Todo AI Chatbot.
 Implements all task management, recurring tasks, and analytics tools.
+Extended for 012-advanced-todo-features with due dates and recurrence.
 """
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from sqlmodel import Session, select, func
 from src.mcp.server import mcp_server
 from src.models import Task, RecurringTask
+from src.models.task import TaskCreate
 from src.db.session import get_session
+from src.services.task_service import TaskService
 
 
 # ============================================================================
@@ -57,6 +60,174 @@ def add_task(user_id: int, title: str, description: str = "", session: Session =
     }
 
 
+@mcp_server.tool("add_task_with_due_date")
+def add_task_with_due_date(
+    user_id: int,
+    title: str,
+    description: str = "",
+    due_date_text: Optional[str] = None,
+    user_timezone: str = "UTC",
+    recurrence_pattern: Optional[str] = None,
+    reminder_minutes: int = 15,
+    session: Session = None
+) -> Dict[str, Any]:
+    """
+    Create a new task with optional due date and recurrence pattern.
+
+    Args:
+        user_id: The ID of the user creating the task
+        title: The task title (required, 1-200 characters)
+        description: Optional task description (max 1000 characters)
+        due_date_text: Natural language due date (e.g., "tomorrow at 3pm", "next Friday")
+        user_timezone: User's timezone for date parsing (default: UTC)
+        recurrence_pattern: Recurrence type (daily/weekly/bi-weekly/monthly/yearly)
+        reminder_minutes: Minutes before due date to send reminder (default: 15)
+        session: Database session
+
+    Returns:
+        Dict with task details including due_date, recurrence info
+
+    Examples:
+        >>> add_task_with_due_date(1, "Buy groceries", due_date_text="tomorrow at 3pm")
+        >>> add_task_with_due_date(1, "Team meeting", due_date_text="every Monday at 9am", recurrence_pattern="weekly")
+    """
+    if not session:
+        session = next(get_session())
+
+    # Validate
+    if not title or len(title) < 1 or len(title) > 200:
+        return {"error": "INVALID_TITLE", "message": "Title must be between 1 and 200 characters"}
+
+    if len(description) > 1000:
+        return {"error": "INVALID_DESCRIPTION", "message": "Description cannot exceed 1000 characters"}
+
+    # Create task data
+    task_data = TaskCreate(
+        title=title.strip(),
+        description=description.strip()
+    )
+
+    try:
+        # Use TaskService to create task with due date and recurrence
+        task = TaskService.create_task(
+            session=session,
+            user_id=user_id,
+            task_data=task_data,
+            due_date_text=due_date_text,
+            user_timezone=user_timezone,
+            recurrence_pattern=recurrence_pattern,
+            reminder_minutes=reminder_minutes
+        )
+
+        response = {
+            "task_id": task.id,
+            "status": "created",
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "created_at": task.created_at.isoformat()
+        }
+
+        # Add due date info if present
+        if task.due_date:
+            response["due_date"] = task.due_date.isoformat()
+            response["reminder_minutes"] = task.reminder_minutes
+
+        # Add recurrence info if present
+        if task.is_recurring:
+            response["is_recurring"] = True
+            response["recurrence_pattern"] = task.recurrence_pattern.value
+            response["next_occurrence"] = task.next_occurrence.isoformat() if task.next_occurrence else None
+
+        return response
+
+    except ValueError as e:
+        return {"error": "VALIDATION_ERROR", "message": str(e)}
+    except Exception as e:
+        return {"error": "CREATION_FAILED", "message": f"Failed to create task: {str(e)}"}
+
+
+@mcp_server.tool("update_task_due_date")
+def update_task_due_date(
+    user_id: int,
+    task_id: int,
+    due_date_text: Optional[str] = None,
+    user_timezone: str = "UTC",
+    reminder_minutes: int = 15,
+    session: Session = None
+) -> Dict[str, Any]:
+    """
+    Update the due date of an existing task.
+
+    Args:
+        user_id: The ID of the user who owns the task
+        task_id: The ID of the task to update
+        due_date_text: Natural language due date (e.g., "tomorrow at 3pm", "next Friday", None to clear)
+        user_timezone: User's timezone for date parsing (default: UTC)
+        reminder_minutes: Minutes before due date to send reminder (default: 15)
+        session: Database session
+
+    Returns:
+        Dict with task details including updated due_date
+
+    Examples:
+        >>> update_task_due_date(1, 5, due_date_text="next Monday at 2pm")
+        >>> update_task_due_date(1, 5, due_date_text=None)  # Clear due date
+    """
+    if not session:
+        session = next(get_session())
+
+    # Find task
+    task = session.get(Task, task_id)
+
+    if not task or task.user_id != user_id:
+        return {"error": "TASK_NOT_FOUND", "message": f"Task with ID {task_id} not found"}
+
+    try:
+        # Update due date
+        if due_date_text:
+            # For now, store the text as-is since date parsing utilities may not be available yet
+            # TODO: Integrate DateTimeParser when available
+            # For basic implementation, try to parse ISO format
+            try:
+                from dateutil import parser
+                task.due_date = parser.parse(due_date_text)
+                task.reminder_minutes = reminder_minutes
+            except:
+                return {"error": "INVALID_DATE", "message": f"Unable to parse date: {due_date_text}. Please use ISO format (e.g., '2026-02-10T15:00:00')"}
+        else:
+            # Clear due date
+            task.due_date = None
+            task.reminder_minutes = None
+
+        task.updated_at = datetime.utcnow()
+        session.add(task)
+        session.commit()
+        session.refresh(task)
+
+        response = {
+            "task_id": task.id,
+            "status": "updated",
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "updated_at": task.updated_at.isoformat()
+        }
+
+        # Add due date info if present
+        if task.due_date:
+            response["due_date"] = task.due_date.isoformat()
+            response["reminder_minutes"] = task.reminder_minutes
+        else:
+            response["due_date"] = None
+            response["message"] = "Due date cleared"
+
+        return response
+
+    except Exception as e:
+        return {"error": "UPDATE_FAILED", "message": f"Failed to update task due date: {str(e)}"}
+
+
 @mcp_server.tool("list_tasks")
 def list_tasks(user_id: int, status: str = "all", session: Session = None) -> Dict[str, Any]:
     """
@@ -98,6 +269,124 @@ def list_tasks(user_id: int, status: str = "all", session: Session = None) -> Di
     return {
         "tasks": task_list,
         "count": len(task_list)
+    }
+
+
+@mcp_server.tool("list_tasks_by_due_date")
+def list_tasks_by_due_date(
+    user_id: int,
+    filter_type: str = "all",
+    session: Session = None
+) -> Dict[str, Any]:
+    """
+    Retrieve the user's tasks filtered by due date status.
+
+    Args:
+        user_id: The ID of the user whose tasks to retrieve
+        filter_type: Filter type ('all', 'overdue', 'due_today', 'due_this_week', 'no_due_date')
+        session: Database session
+
+    Returns:
+        Dict with tasks array, count, and filter info
+
+    Examples:
+        >>> list_tasks_by_due_date(1, filter_type="overdue")
+        >>> list_tasks_by_due_date(1, filter_type="due_today")
+        >>> list_tasks_by_due_date(1, filter_type="due_this_week")
+    """
+    if not session:
+        session = next(get_session())
+
+    # Validate filter type
+    valid_filters = ["all", "overdue", "due_today", "due_this_week", "no_due_date"]
+    if filter_type not in valid_filters:
+        return {
+            "error": "INVALID_FILTER",
+            "message": f"Filter type must be one of: {', '.join(valid_filters)}"
+        }
+
+    # Get current time
+    now = datetime.utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+    week_end = today_start + timedelta(days=7)
+
+    # Build base query for pending tasks only
+    query = select(Task).where(
+        Task.user_id == user_id,
+        Task.completed == False
+    )
+
+    # Apply filter
+    if filter_type == "overdue":
+        query = query.where(
+            Task.due_date.isnot(None),
+            Task.due_date < now
+        )
+    elif filter_type == "due_today":
+        query = query.where(
+            Task.due_date.isnot(None),
+            Task.due_date >= today_start,
+            Task.due_date <= today_end
+        )
+    elif filter_type == "due_this_week":
+        query = query.where(
+            Task.due_date.isnot(None),
+            Task.due_date >= now,
+            Task.due_date <= week_end
+        )
+    elif filter_type == "no_due_date":
+        query = query.where(Task.due_date.is_(None))
+    elif filter_type == "all":
+        # Include all tasks with or without due dates
+        pass
+
+    # Order by due date (nulls last)
+    tasks = session.exec(query.order_by(Task.due_date.asc().nullslast())).all()
+
+    # Format tasks
+    task_list = []
+    for task in tasks:
+        task_dict = {
+            "task_id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "created_at": task.created_at.isoformat(),
+            "updated_at": task.updated_at.isoformat()
+        }
+
+        # Add due date info if present
+        if task.due_date:
+            task_dict["due_date"] = task.due_date.isoformat()
+            task_dict["reminder_minutes"] = task.reminder_minutes
+
+            # Calculate due date status
+            if task.due_date < now:
+                task_dict["due_status"] = "overdue"
+            elif today_start <= task.due_date <= today_end:
+                task_dict["due_status"] = "due_today"
+            elif task.due_date <= week_end:
+                task_dict["due_status"] = "due_this_week"
+            else:
+                task_dict["due_status"] = "upcoming"
+        else:
+            task_dict["due_date"] = None
+            task_dict["due_status"] = "no_due_date"
+
+        # Add recurrence info if present
+        if task.is_recurring:
+            task_dict["is_recurring"] = True
+            task_dict["recurrence_pattern"] = task.recurrence_pattern.value if hasattr(task.recurrence_pattern, 'value') else str(task.recurrence_pattern)
+            task_dict["next_occurrence"] = task.next_occurrence.isoformat() if task.next_occurrence else None
+
+        task_list.append(task_dict)
+
+    return {
+        "tasks": task_list,
+        "count": len(task_list),
+        "filter": filter_type,
+        "timestamp": now.isoformat()
     }
 
 

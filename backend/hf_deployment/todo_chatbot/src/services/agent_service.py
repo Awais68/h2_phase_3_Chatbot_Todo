@@ -29,6 +29,12 @@ class AgentService:
 Your capabilities:
 - Create tasks: "add", "create", "remember", "new task", "I need to"
   Urdu: "بنانا", "بنائیں", "ٹاسک بنائیں", "یاد رکھیں", "مجھے چاہیے"
+- Create tasks with due dates: "add task due tomorrow", "create task by Friday", "remind me next week"
+  Urdu: "کل تک", "اگلے ہفتے تک", "جمعہ کو یاد دلانا"
+- Update due dates: "change due date to Monday", "set deadline to 3pm tomorrow", "due next Friday"
+  Urdu: "ڈیڈ لائن تبدیل کریں", "پیر تک کریں", "اگلے جمعہ تک"
+- List tasks by due date: "show overdue tasks", "what's due today", "tasks due this week"
+  Urdu: "آج کے کام", "اس ہفتے کے ٹاسک", "تاخیر سے کام"
 - List tasks: "show", "list", "what are", "see tasks", "my tasks"
   Urdu: "دکھائیں", "دیکھیں", "میرے ٹاسک", "فہرست", "کام دکھائیں"
 - Complete tasks: "done", "complete", "finished", "mark as done"
@@ -48,21 +54,33 @@ Language Support:
 - Recognize Urdu date/time expressions (کل = tomorrow, آج = today, پرسوں = day after tomorrow)
 - Handle Roman Urdu (transliterated Urdu in English script)
 
+Due Date Understanding:
+- Natural language dates: "tomorrow", "next Monday", "in 2 hours", "Friday at 3pm"
+- Time expressions: "at 9am", "by 5:30pm", "in the morning", "tonight"
+- Relative dates: "in 3 days", "2 weeks from now", "next month"
+- Due date filters: "overdue", "due today", "due this week", "no due date"
+- ISO format dates: "2026-02-10T15:00:00"
+
 Always:
 - Confirm actions with friendly messages in the user's language
 - Use status indicators (✓ for success, ✗ for errors)
 - Format task lists clearly with numbers or bullets
+- Include due date information when displaying tasks with deadlines
+- Highlight overdue tasks with urgency indicators
 - Ask for clarification if the request is ambiguous
 - Provide helpful error messages if something fails
 - Be conversational and natural in both languages
 - When user speaks Urdu, respond in Urdu; when English, respond in English
 
-When listing tasks, format them clearly with status indicators."""
+When listing tasks, format them clearly with status indicators and due date information."""
         
         # Map of available MCP tools
         self.mcp_tool_map = {
             'add_task': mcp_tools.add_task,
+            'add_task_with_due_date': mcp_tools.add_task_with_due_date,
+            'update_task_due_date': mcp_tools.update_task_due_date,
             'list_tasks': mcp_tools.list_tasks,
+            'list_tasks_by_due_date': mcp_tools.list_tasks_by_due_date,
             'complete_task': mcp_tools.complete_task,
             'delete_task': mcp_tools.delete_task,
             'update_task': mcp_tools.update_task,

@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyc
 *$py.class
 *.so
 .Python
@@ -58,6 +59,9 @@ htmlcov/
 tasks.json
 tasks.json.backup
 tasks.json.corrupt
+
+# Frontend
+node_modules/
 
 # Large binaries
 minikube-linux-amd64
