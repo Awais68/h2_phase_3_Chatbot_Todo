@@ -1,0 +1,405 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MCP Tools - Advanced Todo Features",
+  "description": "Extended MCP tool definitions for due dates, recurring tasks, and history",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "add_task_with_due_date",
+      "description": "Create a new task with optional due date and recurrence pattern",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "User ID who owns the task"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Task title"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Optional task description",
+            "default": ""
+          },
+          "due_date_text": {
+            "type": "string",
+            "description": "Natural language due date (e.g., 'tomorrow at 3pm', 'next Friday')",
+            "examples": ["tomorrow at 3pm", "next Friday", "in 2 hours", "Jan 15 at 10am"]
+          },
+          "recurrence_pattern": {
+            "type": "string",
+            "enum": ["daily", "weekly", "bi-weekly", "monthly", "yearly"],
+            "description": "Optional recurrence pattern for automatic rescheduling"
+          },
+          "reminder_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440,
+            "default": 15,
+            "description": "Minutes before due_date to send reminder (0-1440, default 15)"
+          }
+        },
+        "required": ["user_id", "title"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "integer",
+            "description": "Created task ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "Task title"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Parsed due date in UTC (ISO 8601)"
+          },
+          "is_recurring": {
+            "type": "boolean",
+            "description": "Whether task is recurring"
+          },
+          "next_occurrence": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Next occurrence for recurring tasks"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["success", "error"],
+            "description": "Operation status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable confirmation message",
+            "examples": ["✓ Task created: 'Buy groceries' due tomorrow at 3:00 PM"]
+          }
+        },
+        "required": ["task_id", "status", "message"]
+      },
+      "errors": [
+        {
+          "code": "INVALID_DUE_DATE",
+          "message": "Could not parse due date from natural language input",
+          "details": "The date/time expression was ambiguous or invalid"
+        },
+        {
+          "code": "INVALID_RECURRENCE",
+          "message": "Recurring tasks must have a due date",
+          "details": "Cannot create recurring task without specifying when it's due"
+        }
+      ]
+    },
+    {
+      "name": "update_task_due_date",
+      "description": "Update the due date and/or recurrence pattern of an existing task",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "User ID who owns the task"
+          },
+          "task_id": {
+            "type": "integer",
+            "description": "Task ID to update"
+          },
+          "due_date_text": {
+            "type": "string",
+            "description": "New due date in natural language (or 'remove' to clear)",
+            "examples": ["tomorrow at 3pm", "next Friday", "remove"]
+          },
+          "recurrence_pattern": {
+            "type": "string",
+            "enum": ["daily", "weekly", "bi-weekly", "monthly", "yearly", "none"],
+            "description": "Update recurrence pattern ('none' to stop recurrence)"
+          },
+          "reminder_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440,
+            "description": "Update reminder time (minutes before due)"
+          }
+        },
+        "required": ["user_id", "task_id"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "integer"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Updated due date in UTC"
+          },
+          "recurrence_pattern": {
+            "type": "string",
+            "description": "Updated recurrence pattern"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["success", "error"]
+          },
+          "message": {
+            "type": "string",
+            "examples": ["✓ Task updated: due date changed to tomorrow at 3:00 PM"]
+          }
+        }
+      },
+      "errors": [
+        {
+          "code": "TASK_NOT_FOUND",
+          "message": "Task does not exist or you don't have permission to modify it"
+        }
+      ]
+    },
+    {
+      "name": "list_tasks_by_due_date",
+      "description": "List tasks filtered by due date range (overdue, due today, upcoming)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "filter": {
+            "type": "string",
+            "enum": ["all", "overdue", "due_today", "due_this_week", "no_due_date"],
+            "default": "all",
+            "description": "Filter tasks by due date status"
+          },
+          "include_completed": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to include completed tasks"
+          }
+        },
+        "required": ["user_id"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "integer"},
+                "title": {"type": "string"},
+                "due_date": {"type": "string", "format": "date-time"},
+                "status": {
+                  "type": "string",
+                  "enum": ["overdue", "due_today", "due_this_week", "upcoming", "no_deadline"]
+                },
+                "recurrence_pattern": {"type": "string"},
+                "completed": {"type": "boolean"}
+              }
+            }
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of tasks returned"
+          },
+          "message": {
+            "type": "string",
+            "examples": ["Found 3 overdue tasks and 5 due today"]
+          }
+        }
+      }
+    },
+    {
+      "name": "view_task_history",
+      "description": "View completed and deleted tasks from history",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "action_type": {
+            "type": "string",
+            "enum": ["all", "completed", "deleted"],
+            "default": "all",
+            "description": "Filter by action type"
+          },
+          "from_date": {
+            "type": "string",
+            "description": "Show history from this date (natural language)",
+            "examples": ["last week", "last month", "this year"]
+          },
+          "search": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Search task titles"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Maximum number of results"
+          }
+        },
+        "required": ["user_id"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "integer"},
+                "original_task_id": {"type": "integer"},
+                "title": {"type": "string"},
+                "action_type": {"type": "string"},
+                "action_date": {"type": "string", "format": "date-time"},
+                "can_restore": {"type": "boolean"}
+              }
+            }
+          },
+          "count": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string",
+            "examples": ["Found 15 history entries: 10 completed, 5 deleted"]
+          }
+        }
+      }
+    },
+    {
+      "name": "restore_deleted_task",
+      "description": "Restore a deleted task from history back to active tasks",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "history_id": {
+            "type": "integer",
+            "description": "History record ID to restore"
+          }
+        },
+        "required": ["user_id", "history_id"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "restored_task_id": {
+            "type": "integer",
+            "description": "New task ID (different from original)"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["success", "error"]
+          },
+          "message": {
+            "type": "string",
+            "examples": ["✓ Task restored: 'Buy groceries' is back in your active tasks"]
+          }
+        }
+      },
+      "errors": [
+        {
+          "code": "CANNOT_RESTORE",
+          "message": "This task cannot be restored",
+          "details": "Only deleted tasks can be restored. Completed tasks are read-only."
+        },
+        {
+          "code": "HISTORY_NOT_FOUND",
+          "message": "History record not found"
+        }
+      ]
+    },
+    {
+      "name": "get_notification_preferences",
+      "description": "Get user's notification preferences",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "User ID"
+          }
+        },
+        "required": ["user_id"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "notification_enabled": {
+            "type": "boolean",
+            "description": "Whether notifications are enabled"
+          },
+          "reminder_minutes_before": {
+            "type": "integer",
+            "description": "Default reminder time in minutes"
+          },
+          "browser_permission_granted": {
+            "type": "boolean",
+            "description": "Whether browser notification permission is granted"
+          },
+          "message": {
+            "type": "string",
+            "examples": ["Notifications enabled: reminders 15 minutes before due time"]
+          }
+        }
+      }
+    },
+    {
+      "name": "update_notification_preferences",
+      "description": "Update user's notification preferences",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "notification_enabled": {
+            "type": "boolean",
+            "description": "Enable or disable all notifications"
+          },
+          "reminder_minutes_before": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440,
+            "description": "Default reminder time (0-1440 minutes)"
+          }
+        },
+        "required": ["user_id"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["success", "error"]
+          },
+          "message": {
+            "type": "string",
+            "examples": ["✓ Notification preferences updated"]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
-    DATABASE_URL: str = "sqlite:///./todo_db.sqlite"
+    DATABASE_URL: str
 
     # Authentication
     SECRET_KEY: str = "your-secret-key-change-in-production"

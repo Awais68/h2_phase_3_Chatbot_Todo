@@ -1,0 +1,432 @@
+openapi: 3.0.3
+info:
+  title: Task History API
+  description: API endpoints for viewing and restoring task history
+  version: 1.0.0
+  contact:
+    name: Todo AI Chatbot - Advanced Features
+
+servers:
+  - url: http://localhost:8000/api
+    description: Local development server
+  - url: https://api.todo-chatbot.com/api
+    description: Production server
+
+tags:
+  - name: History
+    description: Task history management operations
+
+paths:
+  /users/{user_id}/history:
+    get:
+      tags:
+        - History
+      summary: Get user's task history
+      description: Retrieve paginated task history with optional filtering
+      operationId: getTaskHistory
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+        - name: action_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [completed, deleted, all]
+            default: all
+          description: Filter by action type
+        - name: from_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter history from this date (ISO 8601)
+        - name: to_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter history up to this date (ISO 8601)
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 200
+          description: Search tasks by title (full-text search)
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+            default: 50
+          description: Number of records per page
+      responses:
+        '200':
+          description: Task history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskHistoryItem'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+              example:
+                history:
+                  - id: 123
+                    user_id: 1
+                    original_task_id: 456
+                    title: "Buy groceries"
+                    description: "Milk, eggs, bread"
+                    completed: true
+                    due_date: "2026-02-01T15:00:00Z"
+                    recurrence_pattern: null
+                    action_type: "completed"
+                    action_date: "2026-02-01T14:30:00Z"
+                    action_by: 1
+                    can_restore: false
+                    retention_until: "2028-02-01T14:30:00Z"
+                  - id: 124
+                    user_id: 1
+                    original_task_id: 457
+                    title: "Call dentist"
+                    description: ""
+                    completed: false
+                    due_date: null
+                    recurrence_pattern: null
+                    action_type: "deleted"
+                    action_date: "2026-02-02T10:00:00Z"
+                    action_by: 1
+                    can_restore: true
+                    retention_until: "2028-02-02T10:00:00Z"
+                pagination:
+                  page: 1
+                  page_size: 50
+                  total_records: 127
+                  total_pages: 3
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Invalid date format for from_date"
+                details: "Expected ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)"
+        '401':
+          description: Unauthorized - invalid or missing authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - authenticated user does not match user_id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{user_id}/history/{history_id}/restore:
+    post:
+      tags:
+        - History
+      summary: Restore deleted task from history
+      description: Restore a deleted task back to active tasks list
+      operationId: restoreTaskFromHistory
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: User ID
+        - name: history_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: History record ID
+      responses:
+        '200':
+          description: Task restored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Task restored successfully"
+                  restored_task:
+                    $ref: '#/components/schemas/Task'
+              example:
+                message: "Task restored successfully"
+                restored_task:
+                  id: 789
+                  user_id: 1
+                  title: "Call dentist"
+                  description: ""
+                  completed: false
+                  due_date: null
+                  recurrence_pattern: null
+                  is_recurring: false
+                  reminder_minutes: 15
+                  next_occurrence: null
+                  created_at: "2026-02-05T12:00:00Z"
+                  updated_at: "2026-02-05T12:00:00Z"
+        '400':
+          description: Cannot restore task (e.g., completed task, not a deletion)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Cannot restore task"
+                details: "Only deleted tasks can be restored. This task was completed."
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - cannot restore another user's task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: History record not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "History record not found"
+                details: "No history record with ID 999 for user 1"
+
+components:
+  schemas:
+    TaskHistoryItem:
+      type: object
+      required:
+        - id
+        - user_id
+        - original_task_id
+        - title
+        - action_type
+        - action_date
+        - action_by
+        - can_restore
+        - retention_until
+      properties:
+        id:
+          type: integer
+          description: Unique history record ID
+          example: 123
+        user_id:
+          type: integer
+          description: User who owns this task
+          example: 1
+        original_task_id:
+          type: integer
+          description: Original task ID before archival
+          example: 456
+        title:
+          type: string
+          maxLength: 200
+          description: Snapshot of task title
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Snapshot of task description
+          example: "Milk, eggs, bread"
+        completed:
+          type: boolean
+          description: Whether task was completed when archived
+          example: true
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Snapshot of due date (UTC)
+          example: "2026-02-01T15:00:00Z"
+        recurrence_pattern:
+          type: string
+          nullable: true
+          enum: [daily, weekly, bi-weekly, monthly, yearly]
+          description: Snapshot of recurrence pattern
+          example: null
+        action_type:
+          type: string
+          enum: [completed, deleted]
+          description: What action archived the task
+          example: "completed"
+        action_date:
+          type: string
+          format: date-time
+          description: When action occurred (UTC)
+          example: "2026-02-01T14:30:00Z"
+        action_by:
+          type: integer
+          description: User who performed the action
+          example: 1
+        can_restore:
+          type: boolean
+          description: Whether task can be restored (true for deleted, false for completed)
+          example: false
+        retention_until:
+          type: string
+          format: date-time
+          description: When this record will be purged (action_date + 2 years)
+          example: "2028-02-01T14:30:00Z"
+
+    Task:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - completed
+        - is_recurring
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          description: Unique task ID
+          example: 789
+        user_id:
+          type: integer
+          description: User who owns this task
+          example: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Task title
+          example: "Call dentist"
+        description:
+          type: string
+          maxLength: 1000
+          description: Task description
+          default: ""
+          example: ""
+        completed:
+          type: boolean
+          description: Whether task is completed
+          default: false
+          example: false
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: Task deadline (UTC)
+          example: null
+        recurrence_pattern:
+          type: string
+          nullable: true
+          enum: [daily, weekly, bi-weekly, monthly, yearly]
+          description: Recurrence pattern
+          example: null
+        is_recurring:
+          type: boolean
+          description: Whether task auto-reschedules
+          default: false
+          example: false
+        reminder_minutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+          default: 15
+          description: Minutes before due_date to send reminder
+          example: 15
+        next_occurrence:
+          type: string
+          format: date-time
+          nullable: true
+          description: Next due date for recurring tasks (auto-calculated)
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          description: When task was created (UTC)
+          example: "2026-02-05T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: When task was last updated (UTC)
+          example: "2026-02-05T12:00:00Z"
+
+    PaginationInfo:
+      type: object
+      required:
+        - page
+        - page_size
+        - total_records
+        - total_pages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        page_size:
+          type: integer
+          minimum: 1
+          description: Records per page
+          example: 50
+        total_records:
+          type: integer
+          minimum: 0
+          description: Total number of history records
+          example: 127
+        total_pages:
+          type: integer
+          minimum: 0
+          description: Total number of pages
+          example: 3
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid request"
+        details:
+          type: string
+          description: Additional error details
+          example: "Expected ISO 8601 date format"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Better Auth JWT token
+
+security:
+  - BearerAuth: []

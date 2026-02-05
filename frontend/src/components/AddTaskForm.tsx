@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card'
 import { useTaskStore } from '@/stores/useTaskStore'
 import { syncManager } from '@/lib/sync'
 import { api } from '@/lib/api'
+import { authClient } from '@/lib/auth-client'
 
 /**
  * AddTaskForm Component
@@ -21,6 +22,7 @@ export function AddTaskForm() {
   const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { isOffline } = useTaskStore()
+  const { data: session } = authClient.useSession()
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -30,9 +32,17 @@ export function AddTaskForm() {
     setIsSubmitting(true)
 
     try {
+      // Get user info from session
+      const userId = session?.user?.email || session?.user?.id || 'anonymous'
+      const userEmail = session?.user?.email
+      const userName = session?.user?.name
+
       const taskData = {
         title: title.trim(),
         description: description.trim() || undefined,
+        userId: userId,
+        userEmail: userEmail,
+        userName: userName,
       }
 
       if (isOffline) {

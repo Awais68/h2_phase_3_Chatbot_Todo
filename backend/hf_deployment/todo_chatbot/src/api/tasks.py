@@ -123,16 +123,22 @@ def get_tasks(
 @router.get("/{task_id}", response_model=TaskResponse)
 def get_task(
     task_id: int,
+    user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
+    x_user_email: str = Header(None, alias="X-User-Email"),
+    x_user_name: str = Header(None, alias="X-User-Name"),
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(lambda: None)  # Make auth optional
 ):
     """
     Get a specific task by ID.
 
     Args:
         task_id: Task ID
+        user_id: Optional user ID for demo users (if not authenticated)
+        x_user_email: User email from Better Auth (header)
+        x_user_name: User name from Better Auth (header)
         session: Database session
-        current_user: Authenticated user
+        current_user: Authenticated user (optional)
 
     Returns:
         TaskResponse: Requested task
@@ -140,7 +146,24 @@ def get_task(
     Raises:
         HTTPException: If task not found or doesn't belong to user
     """
-    task = TaskService.get_task_by_id(session, task_id, current_user.id)
+    # Determine user ID: use authenticated user if available, otherwise use provided user_id
+    if current_user and hasattr(current_user, 'id'):
+        effective_user_id = current_user.id
+    elif user_id:
+        # Auto-register Better Auth user and get backend integer ID
+        effective_user_id = get_or_create_backend_user(
+            session=session,
+            user_id=user_id,
+            user_email=x_user_email,
+            user_name=x_user_name
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required or user_id must be provided"
+        )
+
+    task = TaskService.get_task_by_id(session, task_id, effective_user_id)
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -154,6 +177,8 @@ def update_task(
     task_id: int,
     task_data: TaskUpdate,
     user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
+    x_user_email: str = Header(None, alias="X-User-Email"),
+    x_user_name: str = Header(None, alias="X-User-Name"),
     session: Session = Depends(get_session),
     current_user: User = Depends(lambda: None)  # Make auth optional
 ):
@@ -164,6 +189,8 @@ def update_task(
         task_id: Task ID to update
         task_data: Updated task data
         user_id: Optional user ID for demo users (if not authenticated)
+        x_user_email: User email from Better Auth (header)
+        x_user_name: User name from Better Auth (header)
         session: Database session
         current_user: Authenticated user (optional)
 
@@ -177,16 +204,19 @@ def update_task(
     if current_user and hasattr(current_user, 'id'):
         effective_user_id = current_user.id
     elif user_id:
-        try:
-            effective_user_id = int(user_id)
-        except (ValueError, TypeError):
-            effective_user_id = abs(hash(user_id)) % (10**9)
+        # Auto-register Better Auth user and get backend integer ID
+        effective_user_id = get_or_create_backend_user(
+            session=session,
+            user_id=user_id,
+            user_email=x_user_email,
+            user_name=x_user_name
+        )
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required or user_id must be provided"
         )
-    
+
     task = TaskService.update_task(session, task_id, effective_user_id, task_data)
     if not task:
         raise HTTPException(
@@ -200,6 +230,8 @@ def update_task(
 def delete_task(
     task_id: int,
     user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
+    x_user_email: str = Header(None, alias="X-User-Email"),
+    x_user_name: str = Header(None, alias="X-User-Name"),
     session: Session = Depends(get_session),
     current_user: User = Depends(lambda: None)  # Make auth optional
 ):
@@ -209,6 +241,8 @@ def delete_task(
     Args:
         task_id: Task ID to delete
         user_id: Optional user ID for demo users (if not authenticated)
+        x_user_email: User email from Better Auth (header)
+        x_user_name: User name from Better Auth (header)
         session: Database session
         current_user: Authenticated user (optional)
 
@@ -219,16 +253,19 @@ def delete_task(
     if current_user and hasattr(current_user, 'id'):
         effective_user_id = current_user.id
     elif user_id:
-        try:
-            effective_user_id = int(user_id)
-        except (ValueError, TypeError):
-            effective_user_id = abs(hash(user_id)) % (10**9)
+        # Auto-register Better Auth user and get backend integer ID
+        effective_user_id = get_or_create_backend_user(
+            session=session,
+            user_id=user_id,
+            user_email=x_user_email,
+            user_name=x_user_name
+        )
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required or user_id must be provided"
         )
-    
+
     deleted = TaskService.delete_task(session, task_id, effective_user_id)
     if not deleted:
         raise HTTPException(

@@ -4,7 +4,9 @@ This file creates the FastAPI app for deployment on Hugging Face Spaces.
 """
 
 import os
-from fastapi import FastAPI, Response
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import SQLModel
@@ -16,12 +18,33 @@ from src.middleware.error_handler import (
     sqlalchemy_exception_handler,
     general_exception_handler
 )
-from src.api import auth, tasks, sync, push, chat, analytics, recurring
+from src.api import auth, tasks, sync, push, chat, analytics, recurring, history
+from src.services.scheduler_service import initialize_scheduler, shutdown_scheduler
+
+# Import all models to register them with SQLModel metadata
+# This ensures tables are created when SQLModel.metadata.create_all() is called
+from src.models.task import Task  # noqa: F401
+from src.models.task_history import TaskHistory  # noqa: F401
+from src.models.notification_preference import NotificationPreference  # noqa: F401
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
+    """Lifespan event handler for startup and shutdown."""
+    # Startup: Create all database tables
+    SQLModel.metadata.create_all(engine)
+    # Initialize scheduler with database connection
+    initialize_scheduler(str(settings.DATABASE_URL))
+    yield
+    # Shutdown: Cleanup scheduler
+    shutdown_scheduler()
+
 
 # Create FastAPI app
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
+    lifespan=lifespan,
     debug=settings.DEBUG
 )
 
@@ -41,12 +64,7 @@ app.include_router(push.router)
 app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(analytics.router, prefix="/api", tags=["analytics"])
 app.include_router(recurring.router, prefix="/api", tags=["recurring"])
-
-
-@app.on_event("startup")
-def on_startup():
-    """Initialize database tables on startup."""
-    SQLModel.metadata.create_all(engine)
+app.include_router(history.router, prefix="/api", tags=["history"])
 
 
 @app.get("/")

@@ -1,124 +1,305 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Edit, CheckCircle, Calendar, Flag, Trash2, Plus } from 'lucide-react';
-import { Mission } from '@/types';
+import React, { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import {
+  Search,
+  Filter,
+  CheckCircle,
+  Trash2,
+  RotateCcw,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
-interface HistoryTabProps {
-    missions: Mission[];
-    isDark: boolean;
-    onEdit: (mission: Mission) => void;
+interface TaskHistoryItem {
+  history_id: number
+  original_task_id: number
+  title: string
+  description: string
+  completed: boolean
+  due_date: string | null
+  recurrence_pattern: string | null
+  action_type: 'completed' | 'deleted'
+  action_date: string
+  can_restore: boolean
+  retention_until: string
 }
 
-const HistoryTab: React.FC<HistoryTabProps> = ({ missions, isDark, onEdit }) => {
-    const completedMissions = missions.filter(mission => mission.status === 'completed');
+interface HistoryResponse {
+  items: TaskHistoryItem[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
 
-    return (
-        <div className="p-6">
-            <h2 className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Task History</h2>
+export function HistoryTab() {
+  const [history, setHistory] = useState<TaskHistoryItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [actionTypeFilter, setActionTypeFilter] = useState<'all' | 'completed' | 'deleted'>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+  const pageSize = 50
 
-            <div className="mb-6">
-                <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Recently Completed</h3>
+  useEffect(() => {
+    fetchHistory()
+  }, [searchQuery, actionTypeFilter, currentPage])
 
-                {completedMissions.length > 0 ? (
-                    <div className="space-y-4">
-                        {completedMissions.map((mission) => (
-                            <motion.div
-                                key={mission.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={`p-4 rounded-xl border ${
-                                    isDark
-                                        ? 'bg-gray-800/50 border-gray-700 text-gray-200'
-                                        : 'bg-white border-gray-200 text-gray-700'
-                                }`}
-                            >
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{mission.title}</h4>
-                                        <p className="text-sm mt-1">{mission.description}</p>
-                                        <div className="flex items-center gap-4 mt-2 text-xs">
-                                            <span className={`px-2 py-1 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                                Priority: {mission.priority}
-                                            </span>
-                                            <span className={`px-2 py-1 rounded ${isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-700'}`}>
-                                                Completed
-                                            </span>
-                                            <span className={`px-2 py-1 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                                {new Date(mission.dueDate).toLocaleDateString()}
-                                            </span>
-                                            <span className={`px-2 py-1 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                                Category: {mission.category}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => onEdit(mission)}
-                                            className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                                            title="Edit"
-                                        >
-                                            <Edit className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
+  const fetchHistory = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        page_size: pageSize.toString(),
+      })
 
-                                {/* Display tags if they exist */}
-                                {mission.tags && mission.tags.length > 0 && (
-                                    <div className="mt-3 flex flex-wrap gap-2">
-                                        {mission.tags.map((tag, index) => (
-                                            <span
-                                                key={index}
-                                                className={`text-xs px-2 py-1 rounded-full ${
-                                                    isDark
-                                                        ? 'bg-cyan-900/30 text-cyan-300 border border-cyan-700/50'
-                                                        : 'bg-cyan-100 text-cyan-700 border border-cyan-300'
-                                                }`}
-                                            >
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
+      if (searchQuery) {
+        params.append('search', searchQuery)
+      }
 
-                                {/* Display shopping list items if they exist */}
-                                {mission.shoppingList && mission.shoppingList.length > 0 && (
-                                    <div className="mt-3 space-y-2">
-                                        <h5 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Shopping List:</h5>
-                                        {mission.shoppingList.map((category, catIndex) => (
-                                            <div key={catIndex} className="ml-2">
-                                                <h6 className={`text-xs font-semibold ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{category.name}</h6>
-                                                <div className="space-y-1">
-                                                    {category.items.map((item, itemIndex) => (
-                                                        <div
-                                                            key={itemIndex}
-                                                            className={`text-xs flex justify-between pl-2 ${item.completed ? 'line-through opacity-60' : ''}`}
-                                                        >
-                                                            <span>{item.name} (x{item.quantity})</span>
-                                                            <span>${item.price.toFixed(2)}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </motion.div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className={`p-8 text-center rounded-xl border ${
-                        isDark ? 'bg-gray-800/30 border-gray-700 text-gray-400' : 'bg-gray-50 border-gray-200 text-gray-500'
-                    }`}>
-                        <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                        <p>No completed tasks yet.</p>
-                        <p className="text-sm mt-1">Your completed tasks will appear here.</p>
-                    </div>
-                )}
+      if (actionTypeFilter !== 'all') {
+        params.append('action_type', actionTypeFilter)
+      }
+
+      // Use demo user ID if not authenticated
+      const userId = localStorage.getItem('userId') || '1'
+      params.append('user_id', userId)
+
+      const response = await fetch(`/api/history?${params.toString()}`)
+      const data: HistoryResponse = await response.json()
+
+      setHistory(data.items)
+      setTotalPages(data.total_pages)
+      setTotal(data.total)
+    } catch (error) {
+      console.error('Failed to fetch history:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRestore = async (historyId: number) => {
+    try {
+      const userId = localStorage.getItem('userId') || '1'
+      const response = await fetch(`/api/history/${historyId}/restore?user_id=${userId}`, {
+        method: 'POST',
+      })
+
+      if (response.ok) {
+        // Remove from history list
+        setHistory((prev) => prev.filter((item) => item.history_id !== historyId))
+        setTotal((prev) => prev - 1)
+        alert('Task restored successfully!')
+      } else {
+        const error = await response.json()
+        alert(`Failed to restore task: ${error.detail}`)
+      }
+    } catch (error) {
+      console.error('Failed to restore task:', error)
+      alert('Failed to restore task')
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  return (
+    <div className="container mx-auto p-6 max-w-6xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-6 h-6" />
+            Task History
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            View your completed and deleted tasks from the past 2 years
+          </p>
+        </CardHeader>
+        <CardContent>
+          {/* Filters and Search */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search tasks..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="pl-10"
+              />
             </div>
-        </div>
-    );
-};
 
-export default HistoryTab;
+            {/* Action Type Filter */}
+            <div className="flex gap-2">
+              <Button
+                variant={actionTypeFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setActionTypeFilter('all')
+                  setCurrentPage(1)
+                }}
+              >
+                All ({total})
+              </Button>
+              <Button
+                variant={actionTypeFilter === 'completed' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setActionTypeFilter('completed')
+                  setCurrentPage(1)
+                }}
+              >
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Completed
+              </Button>
+              <Button
+                variant={actionTypeFilter === 'deleted' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setActionTypeFilter('deleted')
+                  setCurrentPage(1)
+                }}
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Deleted
+              </Button>
+            </div>
+          </div>
+
+          {/* History List */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : history.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Calendar className="w-16 h-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">No history entries</h3>
+              <p className="text-sm text-muted-foreground max-w-sm">
+                Your completed and deleted tasks will appear here
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {history.map((item) => (
+                  <motion.div
+                    key={item.history_id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium">{item.title}</h3>
+                          <Badge
+                            variant={item.action_type === 'completed' ? 'default' : 'destructive'}
+                          >
+                            {item.action_type === 'completed' ? (
+                              <>
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Completed
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Deleted
+                              </>
+                            )}
+                          </Badge>
+                          {item.recurrence_pattern && (
+                            <Badge variant="outline">
+                              Recurring: {item.recurrence_pattern}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {item.description && (
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {item.description}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>Action: {formatDate(item.action_date)}</span>
+                          {item.due_date && (
+                            <span>Due: {formatDate(item.due_date)}</span>
+                          )}
+                          <span>Retention: {formatDate(item.retention_until)}</span>
+                        </div>
+                      </div>
+
+                      {item.can_restore && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRestore(item.history_id)}
+                          className="flex-shrink-0"
+                        >
+                          <RotateCcw className="w-4 h-4 mr-1" />
+                          Restore
+                        </Button>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-6 border-t">
+                  <div className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages} ({total} total entries)
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      Previous
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+export default HistoryTab
