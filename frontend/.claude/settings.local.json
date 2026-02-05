@@ -46,7 +46,10 @@
       "Bash(curl -s http://localhost:3001/)",
       "Bash(curl -s http://localhost:3001/api/1/analytics/overview)",
       "Bash(curl -s http://localhost:8001/ready)",
-      "Bash(pkill -f \"node.*next\")"
+      "Bash(pkill -f \"node.*next\")",
+      "Bash(git merge:*)",
+      "Bash(git pull:*)",
+      "Bash(git branch:*)"
     ]
   }
 }

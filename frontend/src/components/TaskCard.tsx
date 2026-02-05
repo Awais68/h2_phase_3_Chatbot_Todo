@@ -8,7 +8,8 @@ import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Task } from '@/types'
 import { cn } from '@/lib/utils'
-import { getDueDateStatus, formatDueDate } from '@/utils/dateUtils'
+import { getDueDateStatus } from '@/utils/dateUtils'
+import { formatDueDate } from '@/utils/formatters'
 
 /**
  * Props for TaskCard component
