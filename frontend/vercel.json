@@ -33,7 +33,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://awais68-todo-chatbot.hf.space/api/:path*"
+      "destination": "http://localhost:8001/api/:path*"
     }
   ]
 }
