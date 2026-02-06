@@ -68,6 +68,38 @@ class Task(SQLModel, table=True):
         sa_column=Column(JSON),
         description="Task subitems/checklist stored as JSON array"
     )
+    
+    # Task metadata fields
+    category: Optional[str] = Field(
+        default=None,
+        max_length=100,
+        description="Task category (e.g., shopping, work, personal)"
+    )
+    tags: Optional[List[str]] = Field(
+        default=None,
+        sa_column=Column(JSON),
+        description="Task tags as JSON array"
+    )
+    status: Optional[str] = Field(
+        default="pending",
+        max_length=50,
+        description="Task status (pending, active, completed, failed)"
+    )
+    priority: Optional[str] = Field(
+        default="medium",
+        max_length=20,
+        description="Task priority (critical, high, medium, low)"
+    )
+    shopping_list: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        sa_column=Column(JSON),
+        description="Shopping list categories with items as JSON array"
+    )
+    recursion: Optional[str] = Field(
+        default=None,
+        max_length=50,
+        description="Recursion/recurrence description (e.g., Weekly, Monthly)"
+    )
 
     def validate_due_date(self) -> None:
         """
@@ -121,6 +153,13 @@ class TaskCreate(SQLModel):
     title: str = Field(max_length=200, min_length=1)
     description: str = Field(default="", max_length=1000)
     client_id: Optional[str] = Field(default=None, max_length=100)
+    category: Optional[str] = Field(default=None, max_length=100)
+    tags: Optional[List[str]] = Field(default=None)
+    status: Optional[str] = Field(default="pending", max_length=50)
+    priority: Optional[str] = Field(default="medium", max_length=20)
+    shopping_list: Optional[List[Dict[str, Any]]] = Field(default=None)
+    recursion: Optional[str] = Field(default=None, max_length=50)
+    due_date: Optional[datetime] = Field(default=None)
 
 
 class TaskUpdate(SQLModel):
@@ -130,6 +169,13 @@ class TaskUpdate(SQLModel):
     description: Optional[str] = Field(default=None, max_length=1000)
     completed: Optional[bool] = Field(default=None)
     subitems: Optional[List[Dict[str, Any]]] = Field(default=None)
+    category: Optional[str] = Field(default=None, max_length=100)
+    tags: Optional[List[str]] = Field(default=None)
+    status: Optional[str] = Field(default=None, max_length=50)
+    priority: Optional[str] = Field(default=None, max_length=20)
+    shopping_list: Optional[List[Dict[str, Any]]] = Field(default=None)
+    recursion: Optional[str] = Field(default=None, max_length=50)
+    due_date: Optional[datetime] = Field(default=None)
 
 
 class TaskResponse(SQLModel):
@@ -152,3 +198,11 @@ class TaskResponse(SQLModel):
     reminder_minutes: int = 15
     next_occurrence: Optional[datetime] = None
     subitems: Optional[List[Dict[str, Any]]] = None
+    
+    # Task metadata fields
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    shopping_list: Optional[List[Dict[str, Any]]] = None
+    recursion: Optional[str] = None

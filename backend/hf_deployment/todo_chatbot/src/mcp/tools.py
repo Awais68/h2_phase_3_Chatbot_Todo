@@ -136,7 +136,7 @@ def add_task_with_due_date(
         # Add recurrence info if present
         if task.is_recurring:
             response["is_recurring"] = True
-            response["recurrence_pattern"] = task.recurrence_pattern.value
+            response["recurrence_pattern"] = task.recurrence_pattern
             response["next_occurrence"] = task.next_occurrence.isoformat() if task.next_occurrence else None
 
         return response
@@ -377,7 +377,7 @@ def list_tasks_by_due_date(
         # Add recurrence info if present
         if task.is_recurring:
             task_dict["is_recurring"] = True
-            task_dict["recurrence_pattern"] = task.recurrence_pattern.value if hasattr(task.recurrence_pattern, 'value') else str(task.recurrence_pattern)
+            task_dict["recurrence_pattern"] = str(task.recurrence_pattern) if task.recurrence_pattern else None
             task_dict["next_occurrence"] = task.next_occurrence.isoformat() if task.next_occurrence else None
 
         task_list.append(task_dict)

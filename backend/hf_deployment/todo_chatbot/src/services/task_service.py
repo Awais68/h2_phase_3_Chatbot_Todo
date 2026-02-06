@@ -167,9 +167,15 @@ class TaskService:
             task.description = task_data.description
         if task_data.completed is not None:
             task.completed = task_data.completed
+        if task_data.due_date is not None:
+            task.due_date = task_data.due_date
 
         task.updated_at = datetime.utcnow()
         task.version += 1
+
+        # Validate the task after updates
+        task.validate_due_date()
+        task.validate_recurrence()
 
         session.add(task)
         session.commit()
@@ -375,7 +381,7 @@ class TaskService:
         # Calculate occurrence after next_occurrence
         future_occurrence = RecurrenceCalculator.calculate_next_occurrence(
             original_task.next_occurrence,
-            original_task.recurrence_pattern.value
+            original_task.recurrence_pattern
         )
 
         # Create new task instance

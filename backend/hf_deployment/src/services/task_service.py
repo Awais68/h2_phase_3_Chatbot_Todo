@@ -27,7 +27,14 @@ class TaskService:
             user_id=user_id,
             title=task_data.title,
             description=task_data.description,
-            client_id=task_data.client_id
+            client_id=task_data.client_id,
+            category=task_data.category,
+            tags=task_data.tags,
+            status=task_data.status or "pending",
+            priority=task_data.priority or "medium",
+            shopping_list=task_data.shopping_list,
+            recursion=task_data.recursion,
+            due_date=task_data.due_date
         )
 
         session.add(task)
@@ -107,6 +114,20 @@ class TaskService:
             task.completed = task_data.completed
         if task_data.subitems is not None:
             task.subitems = task_data.subitems
+        if task_data.category is not None:
+            task.category = task_data.category
+        if task_data.tags is not None:
+            task.tags = task_data.tags
+        if task_data.status is not None:
+            task.status = task_data.status
+        if task_data.priority is not None:
+            task.priority = task_data.priority
+        if task_data.shopping_list is not None:
+            task.shopping_list = task_data.shopping_list
+        if task_data.recursion is not None:
+            task.recursion = task_data.recursion
+        if task_data.due_date is not None:
+            task.due_date = task_data.due_date
 
         task.updated_at = datetime.utcnow()
         task.version += 1

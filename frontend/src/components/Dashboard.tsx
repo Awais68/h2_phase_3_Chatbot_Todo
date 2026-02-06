@@ -30,6 +30,8 @@ import {
     LogOut,
     MessageSquare,
     Repeat,
+    History,
+    Bell,
 } from 'lucide-react';
 import VoiceCommandButton from './VoiceCommandButton';
 import ParticlesBackground from './ParticlesBackground';
@@ -37,6 +39,12 @@ import ChatTab from './ChatTab';
 import RecursionTab from './RecursionTab';
 import { api } from '@/lib/api';
 import { useSession, signOut } from '@/lib/auth-client';
+
+// Helper function to get consistent userId
+const getUserId = (session: any): string => {
+  // Always prioritize email for consistency across all operations
+  return session?.user?.email || session?.user?.id || 'anonymous';
+};
 
 // Types
 interface Item {
@@ -777,9 +785,9 @@ export default function Dashboard() {
                     }
                 }
 
-                const userId = session?.user?.email || session?.user?.id;
+                const userId = getUserId(session);
 
-                if (!userId) {
+                if (!userId || userId === 'anonymous') {
                     console.error('No userId found in session');
                     // Show empty missions if no user ID found
                     setMissions([]);
@@ -878,6 +886,7 @@ export default function Dashboard() {
         { id: 'pending', label: 'Pending', icon: <AlertTriangle className="w-5 h-5" />, count: stats.pending },
         { id: 'completed', label: 'Completed', icon: <CheckCircle className="w-5 h-5" />, count: stats.completed },
         { id: 'starred', label: 'Priority', icon: <Star className="w-5 h-5" />, count: missions.filter(m => m.priority === 'critical' || m.priority === 'high').length },
+        { id: 'history', label: 'History', icon: <History className="w-5 h-5" />, count: 0 },
         { id: 'recursion', label: 'Recursion', icon: <Repeat className="w-5 h-5" />, count: 0 },
         { id: 'chatbot', label: 'AI Assistant', icon: <MessageSquare className="w-5 h-5" />, count: 0 },
     ];
@@ -910,7 +919,7 @@ export default function Dashboard() {
     const handleAddMission = useCallback(async (missionData: Omit<Mission, 'id' | 'createdAt'>) => {
         try {
             // Get user info from session
-            const userId = session?.user?.email || session?.user?.id || 'anonymous';
+            const userId = getUserId(session);
             const userEmail = session?.user?.email;
             const userName = session?.user?.name;
 
@@ -985,7 +994,7 @@ export default function Dashboard() {
     // Delete mission (move to trash)
     const handleDeleteMission = useCallback(async (id: string) => {
         try {
-            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+            const userId = getUserId(session);
 
             // Try to delete from backend
             try {
@@ -1034,7 +1043,7 @@ export default function Dashboard() {
         if (!editingMission) return;
 
         try {
-            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+            const userId = getUserId(session);
 
             // Try to update in backend
             try {
@@ -1087,7 +1096,7 @@ export default function Dashboard() {
             const mission = missions.find(m => m.id === id);
             if (!mission) return;
 
-            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+            const userId = getUserId(session);
             const newStatus = mission.status === 'completed' ? 'pending' : 'completed';
 
             // Try to update in backend
@@ -1273,7 +1282,7 @@ export default function Dashboard() {
         if (editingItemMissionId) {
             const missionToUpdate = missions.find(m => m.id === editingItemMissionId);
             if (missionToUpdate) {
-                const userId = session?.user?.id || session?.user?.email || 'anonymous';
+                const userId = getUserId(session);
 
                 const taskUpdateData = {
                     title: missionToUpdate.title,
@@ -1354,7 +1363,7 @@ export default function Dashboard() {
         // Sync with backend by updating the parent task
         const missionToUpdate = missions.find(m => m.id === missionId);
         if (missionToUpdate) {
-            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+            const userId = getUserId(session);
 
             const taskUpdateData = {
                 title: missionToUpdate.title,
@@ -1445,7 +1454,7 @@ export default function Dashboard() {
         // Sync with backend by updating the parent task
         const missionToUpdate = missions.find(m => m.id === missionId);
         if (missionToUpdate) {
-            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+            const userId = getUserId(session);
 
             const taskUpdateData = {
                 title: missionToUpdate.title,
@@ -1537,7 +1546,7 @@ export default function Dashboard() {
         // Sync with backend by updating the parent task
         const missionToUpdate = missions.find(m => m.id === missionId);
         if (missionToUpdate) {
-            const userId = session?.user?.id || session?.user?.email || 'anonymous';
+            const userId = getUserId(session);
 
             const taskUpdateData = {
                 title: missionToUpdate.title,
@@ -1710,18 +1719,16 @@ export default function Dashboard() {
                     >
                         <Menu className="w-6 h-6" />
                     </button>
-                    <h1 className={`text-lg font-bold ${isDark ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500' : 'text-cyan-600'}`}>
-                        <Target className="inline w-5 h-5 mr-2" />
+                    <h1 className={`text-lg font-bold ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
                         Mission Control
                     </h1>
-                    {session?.user?.image ? (
-                        <img src={session.user.image} alt="Profile" className="w-8 h-8 rounded-full border-2 border-cyan-500 object-cover" />
-                    ) : (
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm
-                            ${isDark ? 'bg-gradient-to-br from-cyan-500 to-blue-600' : 'bg-gradient-to-br from-cyan-400 to-blue-500'}`}>
-                            {session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || '?'}
-                        </div>
-                    )}
+                    <button
+                        onClick={() => {/* Notifications handler */}}
+                        className={`relative p-2 rounded-lg ${isDark ? 'text-cyan-400 hover:bg-gray-800' : 'text-cyan-600 hover:bg-gray-100'}`}
+                    >
+                        <Bell className="w-5 h-5" />
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
                 </div>
 
                 {/* Mobile Overlay */}
@@ -1863,6 +1870,23 @@ export default function Dashboard() {
 
                             {/* Actions */}
                             <div className="flex items-center gap-3">
+                                {/* Notifications Bell Icon */}
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        // TODO: Add notification panel logic
+                                        alert('Notifications feature - coming soon!')
+                                    }}
+                                    className={`relative p-3 rounded-lg transition-all ${isDark ? 'bg-gray-800 text-gray-400 hover:text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                >
+                                    <Bell className="w-5 h-5" />
+                                    {/* Notification badge - example for unread count */}
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                                        3
+                                    </span>
+                                </motion.button>
+
                                 {/* Theme Toggle */}
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}
@@ -2047,11 +2071,11 @@ export default function Dashboard() {
                         {activeTab === 'chatbot' ? (
                             <div className="h-[calc(100vh-12rem)]">
                                 <ChatTab
-                                    userId={session?.user?.email || session?.user?.id || ''}
+                                    userId={getUserId(session)}
                                     isDark={isDark}
                                     onTasksUpdated={async () => {
                                         try {
-                                            const userId = session?.user?.email || session?.user?.id;
+                                            const userId = getUserId(session);
                                             const userEmail = session?.user?.email;
                                             const userName = session?.user?.name;
                                             if (userId) {
@@ -2561,38 +2585,33 @@ export default function Dashboard() {
                 </main>
             </div>
 
-
             {/* Add Mission Modal */}
             <AnimatePresence>
-                {
-                    showAddModal && (
-                        <AddMissionModal
-                            isOpen={showAddModal}
-                            onClose={() => setShowAddModal(false)}
-                            onAdd={handleAddMission}
-                            isDark={isDark}
-                        />
-                    )
-                }
-                {
-                    showEditModal && editingMission && (
-                        <AddMissionModal
-                            isOpen={showEditModal}
-                            onClose={() => {
-                                setShowEditModal(false);
-                                setEditingMission(null);
-                            }}
-                            onAdd={handleSaveEdit}
-                            isDark={isDark}
-                            initialData={editingMission}
-                            isEditMode={true}
-                        />
-                    )
-                }
-            </AnimatePresence >
+                {showAddModal && (
+                    <AddMissionModal
+                        isOpen={showAddModal}
+                        onClose={() => setShowAddModal(false)}
+                        onAdd={handleAddMission}
+                        isDark={isDark}
+                    />
+                )}
+                {showEditModal && editingMission && (
+                    <AddMissionModal
+                        isOpen={showEditModal}
+                        onClose={() => {
+                            setShowEditModal(false);
+                            setEditingMission(null);
+                        }}
+                        onAdd={handleSaveEdit}
+                        isDark={isDark}
+                        initialData={editingMission}
+                        isEditMode={true}
+                    />
+                )}
+            </AnimatePresence>
 
-        {/* Add Item to Shopping List Modal */}
-        <AnimatePresence>
+            {/* Add Item to Shopping List Modal */}
+            <AnimatePresence>
             {showShoppingList && (
                 <motion.div
                     initial={{ opacity: 0 }}

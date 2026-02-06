@@ -28,7 +28,7 @@ def add_task(user_id: int, title: str, description: str = "") -> Dict[str, Any]:
         description: Optional task description (max 1000 characters)
     
     Returns:
-        Dict with task_id, status, and title
+        Dict with complete task details including task_id, status, title, description, created_at, and completed status
     """
     session = next(get_session())
     
@@ -54,7 +54,11 @@ def add_task(user_id: int, title: str, description: str = "") -> Dict[str, Any]:
     return {
         "task_id": task.id,
         "status": "created",
-        "title": task.title
+        "title": task.title,
+        "description": task.description,
+        "completed": task.completed,
+        "created_at": task.created_at.isoformat(),
+        "updated_at": task.updated_at.isoformat()
     }
 
 

@@ -249,7 +249,18 @@
       "Bash(npm ci)",
       "Bash(npm audit)",
       "Bash(npm audit fix)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(pip install:*)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(netstat:*)",
+      "Bash(chmod:*)",
+      "Bash(/tmp/test_operations.sh)",
+      "Bash(TASK_ID=100)",
+      "Bash(xargs kill:*)",
+      "Bash(jq:*)",
+      "Bash(pip3 install:*)",
+      "Bash(if [ ! -d \"venv\" ])",
+      "Bash(then python3 -m venv venv)"
     ]
   }
 }

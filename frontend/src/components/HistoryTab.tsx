@@ -56,6 +56,7 @@ export function HistoryTab() {
   const fetchHistory = async () => {
     setLoading(true)
     try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
       const params = new URLSearchParams({
         page: currentPage.toString(),
         page_size: pageSize.toString(),
@@ -73,7 +74,12 @@ export function HistoryTab() {
       const userId = localStorage.getItem('userId') || '1'
       params.append('user_id', userId)
 
-      const response = await fetch(`/api/history?${params.toString()}`)
+      const response = await fetch(`${API_BASE_URL}/api/history?${params.toString()}`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data: HistoryResponse = await response.json()
 
       setHistory(data.items)
@@ -81,6 +87,10 @@ export function HistoryTab() {
       setTotal(data.total)
     } catch (error) {
       console.error('Failed to fetch history:', error)
+      // Show empty state on error
+      setHistory([])
+      setTotalPages(1)
+      setTotal(0)
     } finally {
       setLoading(false)
     }
@@ -88,8 +98,9 @@ export function HistoryTab() {
 
   const handleRestore = async (historyId: number) => {
     try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
       const userId = localStorage.getItem('userId') || '1'
-      const response = await fetch(`/api/history/${historyId}/restore?user_id=${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/history/${historyId}/restore?user_id=${userId}`, {
         method: 'POST',
       })
 

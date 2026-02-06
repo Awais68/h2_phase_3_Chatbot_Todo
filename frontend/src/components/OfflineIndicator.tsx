@@ -27,7 +27,7 @@ export function OfflineIndicator() {
     if (isOffline) {
       return {
         icon: WifiOff,
-        text: 'Offline',
+        text: 'Working Offline',
         color: 'text-orange-500',
         bgColor: 'bg-orange-500/10',
         show: true,
@@ -48,7 +48,7 @@ export function OfflineIndicator() {
     if (syncStatus === 'error') {
       return {
         icon: XCircle,
-        text: 'Sync Failed',
+        text: 'Sync Failed - Working Offline',
         color: 'text-red-500',
         bgColor: 'bg-red-500/10',
         show: true,
@@ -61,7 +61,7 @@ export function OfflineIndicator() {
         text: 'Synced',
         color: 'text-green-500',
         bgColor: 'bg-green-500/10',
-        show: false, // Hide after success
+        show: true, // Show success briefly
       }
     }
 

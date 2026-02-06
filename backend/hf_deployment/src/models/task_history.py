@@ -15,8 +15,13 @@ from dateutil.relativedelta import relativedelta
 
 class HistoryActionType(str, Enum):
     """History action type enumeration."""
-    COMPLETED = "completed"
-    DELETED = "deleted"
+    CREATED = "CREATED"
+    UPDATED = "UPDATED"
+    COMPLETED = "COMPLETED"
+    DELETED = "DELETED"
+    ARCHIVED = "ARCHIVED"
+    RESTORED = "RESTORED"
+
 
 
 class TaskHistory(SQLModel, table=True):
@@ -71,7 +76,9 @@ class TaskHistory(SQLModel, table=True):
     )
 
     # History metadata
-    action_type: HistoryActionType = Field(description="What happened: completed or deleted")
+    action_type: HistoryActionType = Field(
+    description="Action performed on task"
+)
     action_date: datetime = Field(
         default_factory=datetime.utcnow,
         sa_column=Column(DateTime(timezone=True)),
@@ -88,17 +95,13 @@ class TaskHistory(SQLModel, table=True):
     )
 
     def __init__(self, **data):
-        """
-        Initialize TaskHistory with automatic retention_until calculation.
-
-        If retention_until is not provided, it is automatically set to
-        action_date + 2 years.
-        """
         super().__init__(**data)
 
         if not self.retention_until:
-            # Auto-set retention period to 2 years from action_date
             self.retention_until = self.action_date + relativedelta(years=2)
+
+        self.validate_action_type()
+
 
     def validate_action_type(self) -> None:
         """
@@ -149,7 +152,7 @@ class TaskHistory(SQLModel, table=True):
             completed=task.completed,
             due_date=task.due_date if hasattr(task, 'due_date') else None,
             recurrence_pattern=task.recurrence_pattern.value if hasattr(task, 'recurrence_pattern') and task.recurrence_pattern else None,
-            action_type=action_type,
+            action_type=action_type.value if isinstance(action_type, HistoryActionType) else action_type,
             action_by=action_by,
             can_restore=(action_type == HistoryActionType.DELETED)
         )

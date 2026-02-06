@@ -18,6 +18,60 @@ mcp = FastMCP("Todo Task Manager")
 # ============================================================================
 
 @mcp.tool()
+def add_task_with_due_date(user_id: int, title: str, due_date: str, description: str = "", timezone: str = "UTC") -> Dict[str, Any]:
+    """
+    Create a new task with a due date for the user.
+
+    Args:
+        user_id: The ID of the user creating the task
+        title: The task title (required, 1-200 characters)
+        due_date: Due date in ISO format (YYYY-MM-DDTHH:MM:SS) or natural language (e.g., "tomorrow", "next Monday")
+        description: Optional task description (max 1000 characters)
+        timezone: User's timezone for interpreting the due date (default: UTC)
+
+    Returns:
+        Dict with task_id, status, and title
+    """
+    session = next(get_session())
+
+    # Validate
+    if not title or len(title) < 1 or len(title) > 200:
+        return {"error": "INVALID_TITLE", "message": "Title must be between 1 and 200 characters"}
+
+    if len(description) > 1000:
+        return {"error": "INVALID_DESCRIPTION", "message": "Description cannot exceed 1000 characters"}
+
+    # Try to parse the due date
+    from src.utils.datetime_parser import DateTimeParser
+    parser = DateTimeParser()
+    parsed_due_date = parser.parse(due_date, user_timezone=timezone)
+
+    if not parsed_due_date:
+        return {"error": "INVALID_DUE_DATE", "message": f"Could not parse due date: {due_date}"}
+
+    # Create task with due date
+    from datetime import datetime
+    task = Task(
+        user_id=user_id,
+        title=title.strip(),
+        description=description.strip(),
+        completed=False,
+        due_date=parsed_due_date
+    )
+
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+
+    return {
+        "task_id": task.id,
+        "status": "created",
+        "title": task.title,
+        "due_date": parsed_due_date.isoformat()
+    }
+
+
+@mcp.tool()
 def add_task(user_id: int, title: str, description: str = "") -> Dict[str, Any]:
     """
     Create a new task for the user.
@@ -224,12 +278,128 @@ def update_task(user_id: int, task_id: int, title: Optional[str] = None,
     }
 
 
+@mcp.tool()
+def update_task_due_date(user_id: int, task_id: int, due_date: str, timezone: str = "UTC") -> Dict[str, Any]:
+    """
+    Update a task's due date.
+
+    Args:
+        user_id: The ID of the user who owns the task
+        task_id: The ID of the task to update
+        due_date: New due date in ISO format (YYYY-MM-DDTHH:MM:SS) or natural language (e.g., "tomorrow", "next Monday")
+        timezone: User's timezone for interpreting the due date (default: UTC)
+
+    Returns:
+        Dict with updated task details
+    """
+    from datetime import datetime
+    session = next(get_session())
+
+    # Get task
+    from sqlmodel import select
+    query = select(Task).where(Task.id == task_id, Task.user_id == user_id)
+    task = session.exec(query).first()
+
+    if not task:
+        return {"error": "TASK_NOT_FOUND", "message": f"Task {task_id} not found or doesn't belong to user"}
+
+    # Try to parse the due date
+    from src.utils.datetime_parser import DateTimeParser
+    parser = DateTimeParser()
+    parsed_due_date = parser.parse(due_date, user_timezone=timezone)
+
+    if not parsed_due_date:
+        return {"error": "INVALID_DUE_DATE", "message": f"Could not parse due date: {due_date}"}
+
+    # Update due date
+    task.due_date = parsed_due_date
+    task.updated_at = datetime.utcnow()
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+
+    return {
+        "task_id": task.id,
+        "status": "due_date_updated",
+        "title": task.title,
+        "due_date": parsed_due_date.isoformat()
+    }
+
+
+# ============================================================================
+# DUE DATE RELATED TOOLS
+# ============================================================================
+
+@mcp.tool()
+def list_tasks_by_due_date(user_id: int, filter_type: str = "all") -> Dict[str, Any]:
+    """
+    Retrieve the user's tasks, optionally filtered by due date status.
+
+    Args:
+        user_id: The ID of the user whose tasks to retrieve
+        filter_type: Filter by due date status ('all', 'overdue', 'today', 'this_week', 'no_due_date')
+
+    Returns:
+        Dict with tasks array and count
+    """
+    session = next(get_session())
+    from datetime import datetime, date
+    from sqlalchemy import and_, or_
+
+    # Build query
+    query = select(Task).where(Task.user_id == user_id)
+
+    today_start = datetime.combine(date.today(), datetime.min.time())
+    today_end = datetime.combine(date.today(), datetime.max.time())
+    week_start = datetime.combine(date.today(), datetime.min.time()) - timedelta(days=date.today().weekday())
+    week_end = week_start + timedelta(days=7)
+
+    if filter_type == "overdue":
+        query = query.where(and_(Task.due_date != None, Task.due_date < datetime.utcnow(), Task.completed == False))
+    elif filter_type == "today":
+        query = query.where(and_(Task.due_date != None,
+                                Task.due_date >= today_start,
+                                Task.due_date <= today_end,
+                                Task.completed == False))
+    elif filter_type == "this_week":
+        query = query.where(and_(Task.due_date != None,
+                                Task.due_date >= week_start,
+                                Task.due_date <= week_end,
+                                Task.completed == False))
+    elif filter_type == "no_due_date":
+        query = query.where(or_(Task.due_date == None, Task.due_date == ""))
+    # For "all", we don't add any additional filters
+
+    tasks = session.exec(query.order_by(Task.due_date.asc(), Task.created_at.desc())).all()
+
+    # Format tasks
+    task_list = []
+    for task in tasks:
+        task_dict = {
+            "task_id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "created_at": task.created_at.isoformat(),
+            "updated_at": task.updated_at.isoformat()
+        }
+        if task.due_date:
+            task_dict["due_date"] = task.due_date.isoformat()
+        task_list.append(task_dict)
+
+    return {
+        "tasks": task_list,
+        "count": len(task_list),
+        "filter_type": filter_type
+    }
+
+
 # ============================================================================
 # RECURRING TASK TOOLS
 # ============================================================================
 
 @mcp.tool()
-def create_recurring_task(user_id: int, title: str, description: str = "", 
+def create_recurring_task(user_id: int, title: str, description: str = "",
                          frequency: str = "daily", start_date: Optional[str] = None) -> Dict[str, Any]:
     """
     Create a new recurring task.

@@ -21,6 +21,7 @@ MIGRATIONS = [
     "src/db/migrations/versions/002_task_history.sql",
     "src/db/migrations/versions/003_notif_prefs.sql",
     "src/db/migrations/versions/004_apscheduler.sql",
+    "src/db/migrations/versions/005_task_metadata_fields.sql",
 ]
 
 def run_migration(conn, migration_file):

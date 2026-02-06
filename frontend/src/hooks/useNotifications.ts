@@ -96,7 +96,6 @@ export const useNotifications = () => {
             data: options.data,
             requireInteraction: options.requireInteraction,
             silent: options.silent,
-            vibrate: [200, 100, 200],
           })
         } else {
           // Fallback to regular notification
