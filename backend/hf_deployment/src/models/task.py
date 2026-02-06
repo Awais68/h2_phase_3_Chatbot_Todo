@@ -3,11 +3,11 @@ Task model migrated to SQLModel with PostgreSQL support.
 
 Extended for 012-advanced-todo-features with due dates, recurrence, and reminders.
 """
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 from sqlmodel import SQLModel, Field, Column
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, JSON
 
 
 class RecurrencePattern(str, Enum):
@@ -60,6 +60,13 @@ class Task(SQLModel, table=True):
         default=None,
         sa_column=Column(DateTime(timezone=True)),
         description="Auto-calculated next due date for recurring tasks"
+    )
+    
+    # Subitems stored as JSON
+    subitems: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        sa_column=Column(JSON),
+        description="Task subitems/checklist stored as JSON array"
     )
 
     def validate_due_date(self) -> None:
@@ -122,6 +129,7 @@ class TaskUpdate(SQLModel):
     title: Optional[str] = Field(default=None, max_length=200, min_length=1)
     description: Optional[str] = Field(default=None, max_length=1000)
     completed: Optional[bool] = Field(default=None)
+    subitems: Optional[List[Dict[str, Any]]] = Field(default=None)
 
 
 class TaskResponse(SQLModel):
@@ -143,3 +151,4 @@ class TaskResponse(SQLModel):
     is_recurring: bool = False
     reminder_minutes: int = 15
     next_occurrence: Optional[datetime] = None
+    subitems: Optional[List[Dict[str, Any]]] = None

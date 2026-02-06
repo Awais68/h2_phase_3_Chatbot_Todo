@@ -4,6 +4,10 @@ Task service migrated to use Neon PostgreSQL.
 from typing import List, Optional
 from datetime import datetime
 from sqlmodel import Session, select
+# from backend.hf_deployment.todo_chatbot.src.db import session
+from src.db import session
+from backend.hf_deployment.src.models import task
+from temp_mcp_build.src.db import session
 from src.models.task import Task, TaskCreate, TaskUpdate
 
 
@@ -105,6 +109,8 @@ class TaskService:
             task.description = task_data.description
         if task_data.completed is not None:
             task.completed = task_data.completed
+        if task_data.subitems is not None:
+            task.subitems = task_data.subitems
 
         task.updated_at = datetime.utcnow()
         task.version += 1
@@ -283,27 +289,27 @@ class TaskService:
         task = TaskService.get_task_by_id(session, task_id, user_id)
         if not task:
             return None
-
-        # Mark as completed
-        task.completed = True
-        task.updated_at = datetime.utcnow()
-        task.version += 1
-
-        session.add(task)
-        session.commit()
-        session.refresh(task)
-
-        # Create history entry for completed task
-        from .history_service import HistoryService
-        from src.models.task_history import HistoryActionType
         try:
+            # Mark as completed
+            task.completed = True
+            task.updated_at = datetime.utcnow()
+            task.version += 1
+            session.add(task)
+
+
             HistoryService.create_history_entry(
                 session=session,
                 task=task,
                 action_type=HistoryActionType.COMPLETED,
                 action_by=user_id
             )
+            session.commit()  # commit both task + history in same transaction
+            session.refresh(task)
         except Exception as e:
+            session.rollback()
+            raise e
+        
+
             # Log but don't fail completion if history creation fails
             import logging
             logger = logging.getLogger(__name__)
@@ -320,3 +326,6 @@ class TaskService:
                 logger.error(f"Failed to create recurring instance for task {task_id}: {e}")
 
         return task
+
+
+
