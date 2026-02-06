@@ -4,10 +4,6 @@ Task service migrated to use Neon PostgreSQL.
 from typing import List, Optional
 from datetime import datetime
 from sqlmodel import Session, select
-# from backend.hf_deployment.todo_chatbot.src.db import session
-from src.db import session
-from backend.hf_deployment.src.models import task
-from temp_mcp_build.src.db import session
 from src.models.task import Task, TaskCreate, TaskUpdate
 
 
