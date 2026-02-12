@@ -22,6 +22,10 @@ MIGRATIONS = [
     "src/db/migrations/versions/003_notif_prefs.sql",
     "src/db/migrations/versions/004_apscheduler.sql",
     "src/db/migrations/versions/005_task_metadata_fields.sql",
+    "src/db/migrations/versions/006_task_subitems.sql",
+    "src/db/migrations/versions/007_fix_action_type_constraint.sql",
+    "src/db/migrations/versions/008_create_backend_users.sql",
+    "src/db/migrations/versions/009_add_missing_task_columns.sql",
 ]
 
 def run_migration(conn, migration_file):

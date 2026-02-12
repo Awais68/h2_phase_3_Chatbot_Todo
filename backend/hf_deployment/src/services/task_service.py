@@ -11,7 +11,7 @@ class TaskService:
     """Service for task CRUD operations with PostgreSQL."""
 
     @staticmethod
-    def create_task(session: Session, user_id: int, task_data: TaskCreate) -> Task:
+    def create_task(session: Session, user_id: str, task_data: TaskCreate) -> Task:
         """
         Create a new task for a user.
 
@@ -33,6 +33,7 @@ class TaskService:
             status=task_data.status or "pending",
             priority=task_data.priority or "medium",
             shopping_list=task_data.shopping_list,
+            subitems=task_data.subitems,
             recursion=task_data.recursion,
             due_date=task_data.due_date
         )
@@ -43,7 +44,7 @@ class TaskService:
         return task
 
     @staticmethod
-    def get_tasks(session: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Task]:
+    def get_tasks(session: Session, user_id: str, skip: int = 0, limit: int = 100) -> List[Task]:
         """
         Get all tasks for a user with pagination.
 
@@ -66,7 +67,7 @@ class TaskService:
         return list(session.exec(statement).all())
 
     @staticmethod
-    def get_task_by_id(session: Session, task_id: int, user_id: int) -> Optional[Task]:
+    def get_task_by_id(session: Session, task_id: int, user_id: str) -> Optional[Task]:
         """
         Get a specific task by ID for a user.
 
@@ -83,7 +84,7 @@ class TaskService:
 
     @staticmethod
     def update_task(
-        session: Session, task_id: int, user_id: int, task_data: TaskUpdate
+        session: Session, task_id: int, user_id: str, task_data: TaskUpdate
     ) -> Optional[Task]:
         """
         Update a task.
@@ -167,7 +168,7 @@ class TaskService:
         return task
 
     @staticmethod
-    def delete_task(session: Session, task_id: int, user_id: int) -> bool:
+    def delete_task(session: Session, task_id: int, user_id: str) -> bool:
         """
         Delete a task.
 
@@ -206,7 +207,7 @@ class TaskService:
         return True
 
     @staticmethod
-    def get_task_by_client_id(session: Session, client_id: str, user_id: int) -> Optional[Task]:
+    def get_task_by_client_id(session: Session, client_id: str, user_id: str) -> Optional[Task]:
         """
         Get a task by its client-generated ID (for offline sync).
 
@@ -289,7 +290,7 @@ class TaskService:
         return new_task
 
     @staticmethod
-    def complete_task(session: Session, task_id: int, user_id: int) -> Optional[Task]:
+    def complete_task(session: Session, task_id: int, user_id: str) -> Optional[Task]:
         """
         Mark a task as completed.
 

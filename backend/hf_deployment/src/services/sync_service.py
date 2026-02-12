@@ -15,7 +15,7 @@ class SyncService:
 
     @staticmethod
     def sync_operations(
-        session: Session, user_id: int, operations: List[Dict[str, Any]]
+        session: Session, user_id: str, operations: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """
         Synchronize a batch of offline operations.
@@ -122,7 +122,7 @@ class SyncService:
         }
 
     @staticmethod
-    def get_pending_operations(session: Session, user_id: int) -> List[SyncOperation]:
+    def get_pending_operations(session: Session, user_id: str) -> List[SyncOperation]:
         """
         Get all pending sync operations for a user.
 

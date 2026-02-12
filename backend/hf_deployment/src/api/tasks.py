@@ -19,8 +19,8 @@ def get_or_create_backend_user(
     user_id: str,
     user_email: str = None,
     user_name: str = None
-) -> int:
-    """Get or create backend user from Better Auth user info, returns integer user ID."""
+) -> str:
+    """Get or create backend user from Better Auth user info, returns string user ID."""
     user = user_registration_service.get_or_create_user(
         session=session,
         user_id=user_id,
@@ -30,7 +30,7 @@ def get_or_create_backend_user(
     return user.id
 
 
-@router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(
     task_data: TaskCreate,
     user_id: str = Query(None, description="User ID for demo/unauthenticated users"),
@@ -74,7 +74,7 @@ def create_task(
     return TaskResponse(**task.model_dump())
 
 
-@router.get("/", response_model=List[TaskResponse])
+@router.get("", response_model=List[TaskResponse])
 def get_tasks(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200),

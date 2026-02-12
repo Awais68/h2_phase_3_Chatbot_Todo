@@ -45,7 +45,8 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     lifespan=lifespan,
-    debug=settings.DEBUG
+    debug=settings.DEBUG,
+    redirect_slashes=False  # Prevent 307 redirects for trailing slashes
 )
 
 # Configure CORS FIRST before any routes

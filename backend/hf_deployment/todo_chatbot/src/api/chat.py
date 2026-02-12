@@ -110,8 +110,9 @@ async def chat_endpoint(
                 session=session
             )
         except RateLimitError as e:
-            # Handle OpenAI quota/rate limit errors
+            # Handle OpenAI quota/rate limit errors gracefully
             error_msg = str(e)
+            print(f"❌ Rate limit error in chat: {error_msg}")
             if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
                 print(f"⚠️  OpenAI API quota exceeded: {error_msg}")
                 # Return a user-friendly fallback response

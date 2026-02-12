@@ -19,7 +19,8 @@ from src.api import auth, tasks, sync, push, chat, analytics, recurring
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    debug=settings.DEBUG
+    debug=settings.DEBUG,
+    redirect_slashes=False  # Prevent 307 redirects for trailing slashes
 )
 
 # Configure CORS FIRST before any routes

@@ -163,7 +163,7 @@ Example responses:
         return tools
 
     def _execute_mcp_tool(self, tool_name: str, arguments: Dict[str, Any], 
-                         user_id: int) -> Dict[str, Any]:
+                         user_id: str) -> Dict[str, Any]:
         """
         Execute a tool by calling the function directly.
         
@@ -193,7 +193,7 @@ Example responses:
     def run_agent(
         self,
         messages: List[Dict[str, str]],
-        user_id: int,
+        user_id: str,
         session: Any = None
     ) -> Dict[str, Any]:
         """

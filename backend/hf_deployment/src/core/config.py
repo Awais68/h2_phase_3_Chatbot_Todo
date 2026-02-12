@@ -27,6 +27,8 @@ class Settings(BaseSettings):
         "http://localhost:3001",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
+        "https://mission-impossible-with-chatbot-git-main-hamzajiis-projects.vercel.app",
+        "https://awais68-todo-chatbot.hf.space"
     ]
 
     # Better Auth (placeholder for future implementation)

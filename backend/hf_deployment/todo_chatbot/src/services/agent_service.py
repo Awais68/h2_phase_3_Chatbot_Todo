@@ -215,20 +215,13 @@ When listing tasks, format them clearly with status indicators and due date info
             # Handle rate limits and quota errors
             error_msg = str(e)
             print(f"⚠️  OpenAI Rate Limit/Quota Error: {error_msg}")
-            if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
-                raise RateLimitError(
-                    f"OpenAI API quota exceeded: {error_msg}. "
-                    f"Please check your billing at https://platform.openai.com/account/billing/overview"
-                )
+            # Just re-raise the original error - don't try to create a new one
             raise
         except APIError as e:
             # Handle other API errors
             error_msg = str(e)
-            if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
-                raise RateLimitError(
-                    f"OpenAI API quota exceeded: {error_msg}. "
-                    f"Please check your billing at https://platform.openai.com/account/billing/overview"
-                )
+            print(f"⚠️  OpenAI API Error: {error_msg}")
+            # Re-raise the original error
             raise
 
         message = response.choices[0].message

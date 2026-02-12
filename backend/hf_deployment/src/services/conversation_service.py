@@ -11,7 +11,7 @@ class ConversationService:
     """Service for managing conversations and messages."""
 
     @staticmethod
-    def create_conversation(user_id: int, session: Session) -> Conversation:
+    def create_conversation(user_id: str, session: Session) -> Conversation:
         """
         Create a new conversation.
 
@@ -68,7 +68,7 @@ class ConversationService:
     @staticmethod
     def store_message(
         conversation_id: int,
-        user_id: int,
+        user_id: str,
         role: str,
         content: str,
         session: Session

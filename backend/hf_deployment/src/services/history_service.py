@@ -49,7 +49,7 @@ class HistoryService:
     @staticmethod
     def get_history(
         session: Session,
-        user_id: int,
+        user_id: str,
         query: Optional[TaskHistoryQuery] = None
     ) -> Tuple[List[TaskHistory], int]:
         """
@@ -101,7 +101,7 @@ class HistoryService:
     @staticmethod
     def search_history(
         session: Session,
-        user_id: int,
+        user_id: str,
         search_query: str,
         page: int = 1,
         page_size: int = 50
@@ -130,7 +130,7 @@ class HistoryService:
     def restore_deleted_task(
         session: Session,
         history_id: int,
-        user_id: int
+        user_id: str
     ) -> Optional[Task]:
         """
         Restore a deleted task from history.
@@ -217,7 +217,7 @@ class HistoryService:
     def get_history_by_id(
         session: Session,
         history_id: int,
-        user_id: int
+        user_id: str
     ) -> Optional[TaskHistory]:
         """
         Get a single history entry by ID.
@@ -237,7 +237,7 @@ class HistoryService:
         return session.exec(statement).first()
 
     @staticmethod
-    def get_history_count(session: Session, user_id: int) -> int:
+    def get_history_count(session: Session, user_id: str) -> int:
         """
         Get total count of history entries for a user.
 

@@ -29,7 +29,7 @@ def get_or_create_backend_user(
     return user.id
 
 
-@router.post("/", response_model=SyncResponse)
+@router.post("", response_model=SyncResponse)
 def sync_offline_changes(
     sync_request: SyncRequest,
     user_id: str = Query(None, description="User ID for demo/unauthenticated users"),

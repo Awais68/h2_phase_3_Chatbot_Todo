@@ -75,7 +75,7 @@ class UserService:
         return user
 
     @staticmethod
-    def get_user_by_id(session: Session, user_id: int) -> Optional[User]:
+    def get_user_by_id(session: Session, user_id: str) -> Optional[User]:
         """
         Get user by ID.
 
