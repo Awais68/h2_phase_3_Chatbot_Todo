@@ -28,6 +28,13 @@ class Task(SQLModel, table=True):
     # Offline sync support
     client_id: Optional[str] = Field(default=None, max_length=100, index=True)
     version: int = Field(default=1)
+    # Extended fields for frontend compatibility
+    priority: Optional[str] = Field(default="medium")
+    status: Optional[str] = Field(default="pending")
+    category: Optional[str] = Field(default="General")
+    tags: Optional[str] = Field(default="[]")  # JSON string for array
+    recursion: Optional[str] = Field(default=None)
+    shopping_list: Optional[str] = Field(default="[]")  # JSON string for array (subitems)
 
     __table_args__ = {"extend_existing": True}
 
@@ -52,6 +59,13 @@ class TaskCreate(SQLModel):
     description: str = Field(default="", max_length=1000)
     due_date: Optional[datetime] = Field(default=None)
     client_id: Optional[str] = Field(default=None, max_length=100)
+    # Extended fields for frontend compatibility
+    priority: Optional[str] = Field(default="medium")
+    status: Optional[str] = Field(default="pending")
+    category: Optional[str] = Field(default="General")
+    tags: Optional[list] = Field(default=[])
+    recursion: Optional[str] = Field(default=None)
+    shopping_list: Optional[list] = Field(default=[])
 
 
 class TaskUpdate(SQLModel):
@@ -61,6 +75,13 @@ class TaskUpdate(SQLModel):
     description: Optional[str] = Field(default=None, max_length=1000)
     completed: Optional[bool] = Field(default=None)
     due_date: Optional[datetime] = Field(default=None)
+    # Extended fields for frontend compatibility
+    priority: Optional[str] = Field(default=None)
+    status: Optional[str] = Field(default=None)
+    category: Optional[str] = Field(default=None)
+    tags: Optional[list] = Field(default=None)
+    recursion: Optional[str] = Field(default=None)
+    shopping_list: Optional[list] = Field(default=None)
 
 
 class TaskResponse(SQLModel):
@@ -76,3 +97,10 @@ class TaskResponse(SQLModel):
     due_date: Optional[datetime] = None
     client_id: Optional[str] = None
     version: int
+    # Extended fields for frontend compatibility
+    priority: Optional[str] = "medium"
+    status: Optional[str] = "pending"
+    category: Optional[str] = "General"
+    tags: Optional[str] = "[]"
+    recursion: Optional[str] = None
+    shopping_list: Optional[str] = "[]"

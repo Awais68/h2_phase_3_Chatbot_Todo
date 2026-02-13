@@ -13,15 +13,14 @@ def configure_cors(app: FastAPI) -> None:
     Args:
         app: FastAPI application instance
     """
-    # Allow all origins in development, restrict in production
-    origins = settings.CORS_ORIGINS if settings.CORS_ORIGINS else ["*"]
-    
+    # Allow all origins - credentials are set to False when using wildcard
+    # This enables cross-origin requests from any frontend
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_origins=["*"],
+        allow_credentials=False,  # Must be False when using wildcard origins
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
         allow_headers=["*"],
         expose_headers=["*"],
-        max_age=600,  # Cache preflight requests for 10 minutes
+        max_age=86400,  # Cache preflight requests for 24 hours
     )

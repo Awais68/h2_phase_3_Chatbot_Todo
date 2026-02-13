@@ -64,6 +64,11 @@ class TaskService:
                 recurrence_pattern
             )
 
+        # Handle tags and shopping_list serialization
+        import json
+        tags_str = json.dumps(task_data.tags) if task_data.tags else "[]"
+        shopping_list_str = json.dumps(task_data.shopping_list) if task_data.shopping_list else "[]"
+
         task = Task(
             user_id=user_id,
             title=task_data.title,
@@ -73,7 +78,14 @@ class TaskService:
             recurrence_pattern=recurrence_pattern,
             is_recurring=is_recurring,
             reminder_minutes=reminder_minutes,
-            next_occurrence=next_occurrence
+            next_occurrence=next_occurrence,
+            # Extended fields
+            priority=task_data.priority or "medium",
+            status=task_data.status or "pending",
+            category=task_data.category or "General",
+            tags=tags_str,
+            recursion=task_data.recursion,
+            shopping_list=shopping_list_str
         )
 
         # Validate the task
@@ -160,6 +172,8 @@ class TaskService:
         if not task:
             return None
 
+        import json
+
         # Update only provided fields
         if task_data.title is not None:
             task.title = task_data.title
@@ -169,6 +183,19 @@ class TaskService:
             task.completed = task_data.completed
         if task_data.due_date is not None:
             task.due_date = task_data.due_date
+        # Extended fields
+        if task_data.priority is not None:
+            task.priority = task_data.priority
+        if task_data.status is not None:
+            task.status = task_data.status
+        if task_data.category is not None:
+            task.category = task_data.category
+        if task_data.tags is not None:
+            task.tags = json.dumps(task_data.tags) if isinstance(task_data.tags, list) else task_data.tags
+        if task_data.recursion is not None:
+            task.recursion = task_data.recursion
+        if task_data.shopping_list is not None:
+            task.shopping_list = json.dumps(task_data.shopping_list) if isinstance(task_data.shopping_list, list) else task_data.shopping_list
 
         task.updated_at = datetime.utcnow()
         task.version += 1

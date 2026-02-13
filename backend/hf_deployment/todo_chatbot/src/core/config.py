@@ -21,13 +21,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    # CORS
-    CORS_ORIGINS: list[str] = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-    ]
+    # CORS - Allow all origins for flexibility
+    CORS_ORIGINS: list[str] = ["*"]
 
     # Better Auth (placeholder for future implementation)
     BETTER_AUTH_ENABLED: bool = False
