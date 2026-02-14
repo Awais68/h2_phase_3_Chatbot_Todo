@@ -163,20 +163,20 @@ Example responses:
         return tools
 
     def _execute_mcp_tool(self, tool_name: str, arguments: Dict[str, Any], 
-                         user_id: str) -> Dict[str, Any]:
+                         user_id: int) -> Dict[str, Any]:
         """
         Execute a tool by calling the function directly.
         
         Args:
             tool_name: Name of the tool to execute
             arguments: Tool arguments
-            user_id: User ID
+            user_id: User ID (integer - database user ID)
         
         Returns:
             Tool execution result
         """
-        # Add user_id to arguments
-        arguments["user_id"] = user_id
+        # Add user_id to arguments (ensure it's an integer)
+        arguments["user_id"] = int(user_id)
         
         # Get the tool function from our map
         tool_func = self.mcp_tool_map.get(tool_name)
@@ -186,18 +186,30 @@ Example responses:
         try:
             # Execute tool directly
             result = tool_func(**arguments)
+            print(f"✅ Tool {tool_name} executed successfully for user_id={user_id}. Result: {result}")
             return result
         except Exception as e:
+            print(f"❌ Tool {tool_name} execution error for user_id={user_id}: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return {"error": "EXECUTION_ERROR", "message": str(e)}
 
     def run_agent(
         self,
         messages: List[Dict[str, str]],
-        user_id: str,
+        user_id: int,
         session: Any = None
     ) -> Dict[str, Any]:
         """
         Run the AI agent with conversation history and MCP tools.
+        
+        Args:
+            messages: Conversation history
+            user_id: Database user ID (integer)
+            session: Database session
+            
+        Returns:
+            Dict with response and tool_calls
 
         Args:
             messages: Conversation history (list of message dicts)
