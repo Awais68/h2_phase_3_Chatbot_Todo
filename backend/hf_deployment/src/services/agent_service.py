@@ -43,15 +43,15 @@ Your capabilities:
   Urdu: "اعداد و شمار", "تجزیہ", "پیداواری صلاحیت"
 
 When creating a task:
-- After successfully creating a task with add_task tool, ALWAYS call list_tasks to get and show the complete details of the newly created task
-- Include the full task information (ID, title, description, status, creation time) in your response
-- Format the response clearly showing all task details
+- After successfully creating a task with add_task tool, ALWAYS call list_tasks immediately to get and show the complete details of the newly created task
+- Include the FULL task information (ID, title, description, status, creation time) in your response in a clear format:
+  ✅ Task Created! ID: [id] | Title: [title] | Description: [description] | Status: ⏳ Pending | Created: [time]
 
 When showing tasks:
-- Use list_tasks tool to retrieve all tasks
-- Display each task with: task ID, title, description, status (✓ completed or ⏳ pending)
-- Format clearly with bullets or numbers
-- Show total count of tasks
+- ALWAYS use list_tasks tool to retrieve all tasks
+- Display COMPLETE list with ALL tasks showing: task ID, title, description, status (✓ completed or ⏳ pending), creation time
+- Format clearly with numbered list showing all details for each task
+- Show total count of tasks and completion stats
 
 When updating tasks:
 - After update_task, call list_tasks to show the updated task details
@@ -225,20 +225,14 @@ Example responses:
             # Handle rate limits and quota errors
             error_msg = str(e)
             print(f"⚠️  OpenAI Rate Limit/Quota Error: {error_msg}")
-            if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
-                raise RateLimitError(
-                    f"OpenAI API quota exceeded: {error_msg}. "
-                    f"Please check your billing at https://platform.openai.com/account/billing/overview"
-                )
+            # Just re-raise the original exception - let the endpoint handle it
             raise
         except APIError as e:
             # Handle other API errors
             error_msg = str(e)
-            if "insufficient_quota" in error_msg or "quota" in error_msg.lower():
-                raise RateLimitError(
-                    f"OpenAI API quota exceeded: {error_msg}. "
-                    f"Please check your billing at https://platform.openai.com/account/billing/overview"
-                )
+            print(f"⚠️  OpenAI API Error: {error_msg}")
+            # Just re-raise the original exception - let the endpoint handle it
+            raise
             raise
 
         message = response.choices[0].message

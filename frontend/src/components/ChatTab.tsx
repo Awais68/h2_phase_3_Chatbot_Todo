@@ -151,26 +151,25 @@ export default function ChatTab({ userId, isDark = false, onTasksUpdated }: Chat
       : 'bg-white/60 border-sky-200/60'
       }`}>
       {/* Chat Header */}
-      <div className={`p-4 border-b ${isDark ? 'border-cyan-500/20' : 'border-sky-200/60'}`}>
-        <h2 className={`text-xl font-semibold ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
+      <div className={`p-3 sm:p-4 border-b ${isDark ? 'border-cyan-500/20' : 'border-sky-200/60'}`}>
+        <h2 className={`text-lg sm:text-xl font-semibold ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
           AI Task Assistant
         </h2>
-        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-          Ask me to manage your tasks using natural language
+        <p className={`text-xs sm:text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+          Ask me to manage your tasks
         </p>
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
         {messages.length === 0 && (
-          <div className={`text-center mt-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-            <p className="text-lg mb-2">👋 Hi! I'm your AI task assistant.</p>
-            <p className="text-sm">Try saying:</p>
-            <ul className="text-sm mt-2 space-y-1">
+          <div className={`text-center mt-4 sm:mt-8 px-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className="text-base sm:text-lg mb-2">👋 Hi! I'm your AI assistant.</p>
+            <p className="text-xs sm:text-sm">Try saying:</p>
+            <ul className="text-xs sm:text-sm mt-2 space-y-1">
               <li>"Add a task to buy groceries"</li>
               <li>"Show me all my tasks"</li>
               <li>"Mark task 1 as complete"</li>
-              <li>"Create a daily recurring task"</li>
             </ul>
           </div>
         )}
@@ -225,11 +224,11 @@ export default function ChatTab({ userId, isDark = false, onTasksUpdated }: Chat
       </div>
 
       {/* Input Area */}
-      <div className={`p-4 border-t ${isDark ? 'border-cyan-500/20' : 'border-sky-200/60'}`}>
+      <div className={`p-3 sm:p-4 border-t ${isDark ? 'border-cyan-500/20' : 'border-sky-200/60'}`}>
         <div className="flex space-x-2">
           <button
             onClick={toggleVoiceInput}
-            className={`p-3 rounded-lg transition-colors ${isListening
+            className={`p-2 sm:p-3 rounded-lg transition-colors ${isListening
               ? 'bg-red-500 text-white'
               : isDark
                 ? 'bg-slate-700/50 text-cyan-400 hover:bg-slate-600/50 border border-cyan-500/20'
@@ -245,8 +244,8 @@ export default function ChatTab({ userId, isDark = false, onTasksUpdated }: Chat
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Type your message or use voice input..."
-            className={`flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${isDark
+            placeholder="Type or use voice..."
+            className={`flex-1 p-2 sm:p-3 border rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 transition-colors ${isDark
               ? 'bg-slate-700/50 border-cyan-500/20 text-white focus:ring-cyan-400 placeholder-gray-400'
               : 'bg-gray-50 border-gray-300 text-gray-800 focus:ring-blue-500'
               }`}
@@ -256,7 +255,7 @@ export default function ChatTab({ userId, isDark = false, onTasksUpdated }: Chat
           <button
             onClick={sendMessage}
             disabled={!input.trim() || isLoading}
-            className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:from-cyan-400 hover:to-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02]"
+            className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm sm:text-base rounded-lg hover:from-cyan-400 hover:to-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300"
           >
             Send
           </button>

@@ -32,34 +32,37 @@ def add_task(user_id: int, title: str, description: str = "") -> Dict[str, Any]:
     """
     session = next(get_session())
     
-    # Validate
-    if not title or len(title) < 1 or len(title) > 200:
-        return {"error": "INVALID_TITLE", "message": "Title must be between 1 and 200 characters"}
-    
-    if len(description) > 1000:
-        return {"error": "INVALID_DESCRIPTION", "message": "Description cannot exceed 1000 characters"}
-    
-    # Create task
-    task = Task(
-        user_id=user_id,
-        title=title.strip(),
-        description=description.strip(),
-        completed=False
-    )
-    
-    session.add(task)
-    session.commit()
-    session.refresh(task)
-    
-    return {
-        "task_id": task.id,
-        "status": "created",
-        "title": task.title,
-        "description": task.description,
-        "completed": task.completed,
-        "created_at": task.created_at.isoformat(),
-        "updated_at": task.updated_at.isoformat()
-    }
+    try:
+        # Validate
+        if not title or len(title) < 1 or len(title) > 200:
+            return {"error": "INVALID_TITLE", "message": "Title must be between 1 and 200 characters"}
+        
+        if len(description) > 1000:
+            return {"error": "INVALID_DESCRIPTION", "message": "Description cannot exceed 1000 characters"}
+        
+        # Create task
+        task = Task(
+            user_id=user_id,
+            title=title.strip(),
+            description=description.strip(),
+            completed=False
+        )
+        
+        session.add(task)
+        session.commit()
+        session.refresh(task)
+        
+        return {
+            "task_id": task.id,
+            "status": "created",
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "created_at": task.created_at.isoformat(),
+            "updated_at": task.updated_at.isoformat()
+        }
+    finally:
+        session.close()
 
 
 @mcp.tool()
@@ -76,27 +79,36 @@ def list_tasks(user_id: int, status: str = "all") -> Dict[str, Any]:
     """
     session = next(get_session())
     
-    # Build query
-    query = select(Task).where(Task.user_id == user_id)
-    
-    if status == "pending":
-        query = query.where(Task.completed == False)
-    elif status == "completed":
-        query = query.where(Task.completed == True)
-    
-    tasks = session.exec(query.order_by(Task.created_at.desc())).all()
-    
-    # Format tasks
-    task_list = []
-    for task in tasks:
-        task_list.append({
-            "task_id": task.id,
-            "title": task.title,
-            "description": task.description,
-            "completed": task.completed,
-            "created_at": task.created_at.isoformat(),
-            "updated_at": task.updated_at.isoformat()
-        })
+    try:
+        # Build query
+        query = select(Task).where(Task.user_id == user_id)
+        
+        if status == "pending":
+            query = query.where(Task.completed == False)
+        elif status == "completed":
+            query = query.where(Task.completed == True)
+        
+        tasks = session.exec(query.order_by(Task.created_at.desc())).all()
+        
+        # Format tasks
+        task_list = []
+        for task in tasks:
+            task_list.append({
+                "task_id": task.id,
+                "title": task.title,
+                "description": task.description,
+                "completed": task.completed,
+                "created_at": task.created_at.isoformat(),
+                "updated_at": task.updated_at.isoformat()
+            })
+        
+        return {
+            "tasks": task_list,
+            "count": len(task_list),
+            "status": "success"
+        }
+    finally:
+        session.close()
     
     return {
         "tasks": task_list,

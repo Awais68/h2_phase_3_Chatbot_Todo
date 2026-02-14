@@ -2163,40 +2163,50 @@ export default function Dashboard() {
                             </div>
                         ) : (
                             <>
-                                {/* Status Cards */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                    <StatusCard
-                                        title="Total Missions"
-                                        count={stats.total}
-                                        icon={Target}
-                                        color="cyan"
-                                        trend={12}
-                                        isDark={isDark}
-                                    />
-                                    <StatusCard
-                                        title="Active"
-                                        count={stats.active}
-                                        icon={Activity}
-                                        color="orange"
-                                        trend={8}
-                                        isDark={isDark}
-                                    />
-                                    <StatusCard
-                                        title="Completed"
-                                        count={stats.completed}
-                                        icon={CheckCircle}
-                                        color="green"
-                                        trend={25}
-                                        isDark={isDark}
-                                    />
-                                    <StatusCard
-                                        title="Pending"
-                                        count={stats.pending}
-                                        icon={Clock}
-                                        color="purple"
-                                        trend={-5}
-                                        isDark={isDark}
-                                    />
+                                {/* Status Cards - Mobile: Horizontal Scroll, Desktop: Grid */}
+                                <div className="mb-6 overflow-x-auto pb-2">
+                                    <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-max sm:min-w-0">
+                                        <div className="min-w-[140px] sm:min-w-0">
+                                            <StatusCard
+                                                title="Total"
+                                                count={stats.total}
+                                                icon={Target}
+                                                color="cyan"
+                                                trend={12}
+                                                isDark={isDark}
+                                            />
+                                        </div>
+                                        <div className="min-w-[140px] sm:min-w-0">
+                                            <StatusCard
+                                                title="Active"
+                                                count={stats.active}
+                                                icon={Activity}
+                                                color="orange"
+                                                trend={8}
+                                                isDark={isDark}
+                                            />
+                                        </div>
+                                        <div className="min-w-[140px] sm:min-w-0">
+                                            <StatusCard
+                                                title="Completed"
+                                                count={stats.completed}
+                                                icon={CheckCircle}
+                                                color="green"
+                                                trend={25}
+                                                isDark={isDark}
+                                            />
+                                        </div>
+                                        <div className="min-w-[140px] sm:min-w-0">
+                                            <StatusCard
+                                                title="Pending"
+                                                count={stats.pending}
+                                                icon={Clock}
+                                                color="purple"
+                                                trend={-5}
+                                                isDark={isDark}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Category Chips */}
