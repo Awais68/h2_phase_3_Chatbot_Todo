@@ -9,9 +9,9 @@ from sqlmodel import SQLModel, Field
 class User(SQLModel, table=True):
     """User entity for authentication."""
 
-    __tablename__ = "backend_users"
+    __tablename__ = "users"
 
-    id: Optional[str] = Field(default=None, primary_key=True, max_length=255)
+    id: Optional[int] = Field(default=None, primary_key=True)
     email: str = Field(unique=True, index=True, max_length=255)
     username: Optional[str] = Field(default=None, index=True, max_length=100)
     hashed_password: str = Field(default="$2b$12$DUMMY_HASH_NO_PASSWORD", max_length=255)

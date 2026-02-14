@@ -11,13 +11,13 @@ class TaskService:
     """Service for task CRUD operations with PostgreSQL."""
 
     @staticmethod
-    def create_task(session: Session, user_id: str, task_data: TaskCreate) -> Task:
+    def create_task(session: Session, user_id: int, task_data: TaskCreate) -> Task:
         """
         Create a new task for a user.
 
         Args:
             session: Database session
-            user_id: ID of the user creating the task
+            user_id: ID of the user creating the task (integer)
             task_data: Task creation data
 
         Returns:
@@ -44,13 +44,13 @@ class TaskService:
         return task
 
     @staticmethod
-    def get_tasks(session: Session, user_id: str, skip: int = 0, limit: int = 100) -> List[Task]:
+    def get_tasks(session: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Task]:
         """
         Get all tasks for a user with pagination.
 
         Args:
             session: Database session
-            user_id: ID of the user
+            user_id: ID of the user (integer)
             skip: Number of records to skip
             limit: Maximum number of records to return
 
@@ -67,14 +67,14 @@ class TaskService:
         return list(session.exec(statement).all())
 
     @staticmethod
-    def get_task_by_id(session: Session, task_id: int, user_id: str) -> Optional[Task]:
+    def get_task_by_id(session: Session, task_id: int, user_id: int) -> Optional[Task]:
         """
         Get a specific task by ID for a user.
 
         Args:
             session: Database session
             task_id: Task ID
-            user_id: ID of the user
+            user_id: ID of the user (integer)
 
         Returns:
             Optional[Task]: Task if found and belongs to user, None otherwise
@@ -84,7 +84,7 @@ class TaskService:
 
     @staticmethod
     def update_task(
-        session: Session, task_id: int, user_id: str, task_data: TaskUpdate
+        session: Session, task_id: int, user_id: int, task_data: TaskUpdate
     ) -> Optional[Task]:
         """
         Update a task.
@@ -92,7 +92,7 @@ class TaskService:
         Args:
             session: Database session
             task_id: Task ID to update
-            user_id: ID of the user
+            user_id: ID of the user (integer)
             task_data: Updated task data
 
         Returns:
@@ -168,7 +168,7 @@ class TaskService:
         return task
 
     @staticmethod
-    def delete_task(session: Session, task_id: int, user_id: str) -> bool:
+    def delete_task(session: Session, task_id: int, user_id: int) -> bool:
         """
         Delete a task.
 
@@ -177,7 +177,7 @@ class TaskService:
         Args:
             session: Database session
             task_id: Task ID to delete
-            user_id: ID of the user
+            user_id: ID of the user (integer)
 
         Returns:
             bool: True if deleted, False if not found
@@ -207,14 +207,14 @@ class TaskService:
         return True
 
     @staticmethod
-    def get_task_by_client_id(session: Session, client_id: str, user_id: str) -> Optional[Task]:
+    def get_task_by_client_id(session: Session, client_id: str, user_id: int) -> Optional[Task]:
         """
         Get a task by its client-generated ID (for offline sync).
 
         Args:
             session: Database session
             client_id: Client-generated unique ID
-            user_id: ID of the user
+            user_id: ID of the user (integer)
 
         Returns:
             Optional[Task]: Task if found, None otherwise
@@ -290,7 +290,7 @@ class TaskService:
         return new_task
 
     @staticmethod
-    def complete_task(session: Session, task_id: int, user_id: str) -> Optional[Task]:
+    def complete_task(session: Session, task_id: int, user_id: int) -> Optional[Task]:
         """
         Mark a task as completed.
 
@@ -299,7 +299,7 @@ class TaskService:
         Args:
             session: Database session
             task_id: Task ID to complete
-            user_id: ID of the user
+            user_id: ID of the user (integer)
 
         Returns:
             Optional[Task]: Completed task or None if not found
@@ -307,28 +307,26 @@ class TaskService:
         task = TaskService.get_task_by_id(session, task_id, user_id)
         if not task:
             return None
+
+        # Mark as completed
+        task.completed = True
+        task.updated_at = datetime.utcnow()
+        task.version += 1
+        session.add(task)
+        session.commit()
+        session.refresh(task)
+
+        # Create history entry (don't fail completion if this fails)
+        from .history_service import HistoryService
+        from src.models.task_history import HistoryActionType
         try:
-            # Mark as completed
-            task.completed = True
-            task.updated_at = datetime.utcnow()
-            task.version += 1
-            session.add(task)
-
-
             HistoryService.create_history_entry(
                 session=session,
                 task=task,
                 action_type=HistoryActionType.COMPLETED,
                 action_by=user_id
             )
-            session.commit()  # commit both task + history in same transaction
-            session.refresh(task)
         except Exception as e:
-            session.rollback()
-            raise e
-        
-
-            # Log but don't fail completion if history creation fails
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to create history entry for task {task_id}: {e}")

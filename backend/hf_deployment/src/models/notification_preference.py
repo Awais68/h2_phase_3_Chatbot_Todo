@@ -29,7 +29,7 @@ class NotificationPreference(SQLModel, table=True):
     __tablename__ = "notification_preferences"
 
     # Primary key (one record per user)
-    user_id: int = Field(primary_key=True, description="User identifier")
+    user_id: int = Field(primary_key=True, foreign_key="users.id", description="User identifier")
 
     # Notification settings
     notification_enabled: bool = Field(

@@ -45,6 +45,7 @@ RUN groupadd --gid 1000 appgroup && \
 # Copy virtual environment from builder
 COPY --from=builder /app/.venv /app/.venv
 
+# Force rebuild timestamp: 2026-02-13T13:20:00
 # Copy application code (excluding .env, .git, etc. via .dockerignore)
 COPY --link . .
 

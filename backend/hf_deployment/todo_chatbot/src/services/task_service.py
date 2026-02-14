@@ -64,28 +64,28 @@ class TaskService:
                 recurrence_pattern
             )
 
-        # Handle tags and shopping_list serialization
-        import json
-        tags_str = json.dumps(task_data.tags) if task_data.tags else "[]"
-        shopping_list_str = json.dumps(task_data.shopping_list) if task_data.shopping_list else "[]"
+        # Pass native Python objects to JSON columns (no json.dumps needed)
+        tags_val = getattr(task_data, 'tags', None)
+        shopping_list_val = getattr(task_data, 'shopping_list', None)
+        subitems_val = getattr(task_data, 'subitems', None)
 
         task = Task(
             user_id=user_id,
             title=task_data.title,
-            description=task_data.description,
-            client_id=task_data.client_id,
+            description=task_data.description or "",
+            client_id=getattr(task_data, 'client_id', None),
             due_date=due_date,
             recurrence_pattern=recurrence_pattern,
             is_recurring=is_recurring,
             reminder_minutes=reminder_minutes,
             next_occurrence=next_occurrence,
-            # Extended fields
-            priority=task_data.priority or "medium",
-            status=task_data.status or "pending",
-            category=task_data.category or "General",
-            tags=tags_str,
-            recursion=task_data.recursion,
-            shopping_list=shopping_list_str
+            priority=getattr(task_data, 'priority', None) or "medium",
+            status=getattr(task_data, 'status', None) or "pending",
+            category=getattr(task_data, 'category', None),
+            tags=tags_val if isinstance(tags_val, list) else None,
+            recursion=getattr(task_data, 'recursion', None),
+            shopping_list=shopping_list_val if isinstance(shopping_list_val, list) else None,
+            subitems=subitems_val if isinstance(subitems_val, list) else None
         )
 
         # Validate the task
@@ -172,8 +172,6 @@ class TaskService:
         if not task:
             return None
 
-        import json
-
         # Update only provided fields
         if task_data.title is not None:
             task.title = task_data.title
@@ -183,7 +181,6 @@ class TaskService:
             task.completed = task_data.completed
         if task_data.due_date is not None:
             task.due_date = task_data.due_date
-        # Extended fields
         if task_data.priority is not None:
             task.priority = task_data.priority
         if task_data.status is not None:
@@ -191,11 +188,13 @@ class TaskService:
         if task_data.category is not None:
             task.category = task_data.category
         if task_data.tags is not None:
-            task.tags = json.dumps(task_data.tags) if isinstance(task_data.tags, list) else task_data.tags
+            task.tags = task_data.tags
         if task_data.recursion is not None:
             task.recursion = task_data.recursion
         if task_data.shopping_list is not None:
-            task.shopping_list = json.dumps(task_data.shopping_list) if isinstance(task_data.shopping_list, list) else task_data.shopping_list
+            task.shopping_list = task_data.shopping_list
+        if hasattr(task_data, 'subitems') and task_data.subitems is not None:
+            task.subitems = task_data.subitems
 
         task.updated_at = datetime.utcnow()
         task.version += 1

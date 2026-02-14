@@ -44,35 +44,7 @@ app.include_router(recurring.router, prefix="/api", tags=["recurring"])
 @app.on_event("startup")
 def on_startup():
     """Initialize database tables on startup."""
-    print("Starting database initialization...")
     SQLModel.metadata.create_all(engine)
-    print("SQLModel tables created.")
-
-    # Add missing columns to tasks table if they don't exist
-    from sqlalchemy import text
-
-    migration_queries = [
-        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority VARCHAR DEFAULT 'medium'",
-        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'pending'",
-        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS category VARCHAR DEFAULT 'General'",
-        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS tags VARCHAR DEFAULT '[]'",
-        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recursion VARCHAR",
-        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS shopping_list VARCHAR DEFAULT '[]'",
-    ]
-
-    try:
-        with engine.connect() as conn:
-            for query in migration_queries:
-                try:
-                    print(f"Running migration: {query[:50]}...")
-                    conn.execute(text(query))
-                    conn.commit()
-                    print(f"Migration successful")
-                except Exception as e:
-                    print(f"Migration note for query: {str(e)[:100]}")
-        print("Database migration completed successfully")
-    except Exception as e:
-        print(f"Database migration error: {e}")
 
 
 @app.get("/")

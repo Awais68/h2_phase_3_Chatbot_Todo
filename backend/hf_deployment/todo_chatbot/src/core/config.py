@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     # Application
     APP_NAME: str = "Todo Evolution API"
-    APP_VERSION: str = "2.0.0"
+    APP_VERSION: str = "2.1.0"
     DEBUG: bool = False
 
     # Database

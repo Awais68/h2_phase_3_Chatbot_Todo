@@ -25,8 +25,18 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "http://localhost:3005",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
+        "http://192.168.100.7:3000",
+        "http://192.168.100.7:3001",
+        "http://192.168.100.7:3002",
+        "http://192.168.100.7:3003",
+        "http://192.168.100.7:3004",
+        "http://192.168.100.7:3005",
         "https://mission-impossible-with-chatbot-git-main-hamzajiis-projects.vercel.app",
         "https://awais68-todo-chatbot.hf.space"
     ]

@@ -20,8 +20,8 @@ class UserRegistrationService:
         # Determine email
         user_email = email if email else (user_id if '@' in user_id else f"{user_id}@temp.local")
         
-        # Try to find user by email or user_id
-        query = select(User).where((User.email == user_email) | (User.id == user_id))
+        # Try to find user by email
+        query = select(User).where(User.email == user_email)
         user = session.exec(query).first()
         
         # Create new user if not found
@@ -30,7 +30,6 @@ class UserRegistrationService:
             username_part = user_email.split('@')[0] if '@' in user_email else user_id[:100]
             
             user = User(
-                id=user_id,  # Use the provided user_id as primary key
                 email=user_email,
                 username=username_part,
                 hashed_password="$2b$12$DUMMY_HASH_FOR_BETTER_AUTH_USERS_NO_PASSWORD_NEEDED",  # Dummy hash for Better Auth users

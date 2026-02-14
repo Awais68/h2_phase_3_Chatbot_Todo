@@ -260,7 +260,11 @@
       "Bash(jq:*)",
       "Bash(pip3 install:*)",
       "Bash(if [ ! -d \"venv\" ])",
-      "Bash(then python3 -m venv venv)"
+      "Bash(then python3 -m venv venv)",
+      "Bash(ss:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git pull:*)",
+      "Bash(git hash-object:*)"
     ]
   }
 }

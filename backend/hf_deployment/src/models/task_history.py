@@ -53,7 +53,7 @@ class TaskHistory(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
     # Foreign keys and references
-    user_id: int = Field(index=True, description="Owner of historical task")
+    user_id: int = Field(foreign_key="users.id", index=True, description="Owner of historical task")
     original_task_id: int = Field(description="Original task ID before archival")
 
     # Snapshot fields (immutable copy of task at time of action)

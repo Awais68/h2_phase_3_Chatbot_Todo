@@ -19,8 +19,8 @@ def get_or_create_backend_user(
     user_id: str,
     user_email: str = None,
     user_name: str = None
-) -> str:
-    """Get or create backend user from Better Auth user info, returns string user ID."""
+) -> int:
+    """Get or create backend user from Better Auth user info, returns integer user ID."""
     user = user_registration_service.get_or_create_user(
         session=session,
         user_id=user_id,

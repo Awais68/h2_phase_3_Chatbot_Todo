@@ -1,55 +1,43 @@
-## Docker Setup
+---
+title: Todo Chatbot API
+emoji: ✅
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+license: mit
+---
 
-Run the Todo Evolution API and supporting services using Docker Compose for a consistent, containerized environment.
+# 🚀 Todo Evolution - AI-Powered Task Management API
 
-### Requirements
-- **Docker** and **Docker Compose** installed
-- No need for local Python or dependencies; all handled in containers
-- Uses Python **3.13-slim** base image and the **uv** package manager for fast dependency management
+A powerful FastAPI-based backend for an intelligent todo application with AI chat integration, recurring tasks, shopping lists, and comprehensive analytics.
 
-### Environment Variables
-Ensure a `.env` file exists in the project root with the following required variables:
-- `DATABASE_URL`: PostgreSQL connection string (e.g., from Neon)
-- `SECRET_KEY`: JWT secret key
-- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: Used by the `postgres-db` service (defaults: `todo_db`, `todo_user`, `todo_pass`)
+## ✨ Features
 
-Refer to the [Environment Variables](#environment-variables) section for details.
+- 🤖 **AI Chat Assistant** - Natural language task management using OpenAI
+- 📋 **Task Management** - Full CRUD operations with categories, tags, and priorities
+- 🔄 **Recurring Tasks** - Automated task generation with flexible scheduling
+- 🛒 **Shopping Lists** - Integrated shopping list management within tasks
+- 📊 **Analytics** - Comprehensive productivity insights and statistics
+- 🔐 **Better Auth** - Secure authentication with PostgreSQL backend
+- 🗃️ **Neon DB** - Serverless PostgreSQL database integration
+- 📱 **Real-time Sync** - Multi-device task synchronization
 
-### Build and Run
+## 🛠️ Tech Stack
 
-1. **Copy and configure your `.env` file**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your Neon DATABASE_URL and SECRET_KEY
-   ```
+- **Framework:** FastAPI 0.115.6
+- **Database:** PostgreSQL (Neon)
+- **ORM:** SQLModel
+- **AI:** OpenAI GPT-4
+- **Auth:** Better Auth compatible
+- **Deployment:** Hugging Face Spaces (Docker)
 
-2. **Start all services**
-   ```bash
-   docker compose up --build
-   ```
-   This will build and start:
-   - `python-app`: Main FastAPI backend (exposes **port 8000**)
-   - `python-src`: Alternate backend (also **port 8000**, for development/worker tasks)
-   - `postgres-db`: PostgreSQL database (exposes **port 5432**)
+## 📚 API Documentation
 
-3. **Access the API**
-   - Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
-   - ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-
-### Special Configuration
-- The Dockerfiles use the `uv` package manager for fast, reproducible Python environments.
-- Healthchecks are enabled for all services (`/health` endpoint for API, `pg_isready` for PostgreSQL).
-- All containers run as non-root users for improved security.
-- The `python-src` service is available for development or worker tasks; customize as needed.
-- To persist PostgreSQL data locally, uncomment the `volumes` section in `docker-compose.yml`.
-
-### Ports
-| Service      | Container Name | Host Port | Container Port |
-|--------------|---------------|-----------|---------------|
-| python-app   | python-app    | 8000      | 8000          |
-| python-src   | python-src    | 8000      | 8000          |
-| postgres-db  | postgres-db   | 5432      | 5432          |
+Once deployed, access the interactive API docs at:
+- Swagger UI: `https://your-space.hf.space/docs`
+- ReDoc: `https://your-space.hf.space/redoc`
 
 ---
 
-For troubleshooting and advanced configuration, see the [Troubleshooting](#troubleshooting) and [Deployment](#deployment) sections below.
+**Built with ❤️ using FastAPI, OpenAI, and Neon DB**

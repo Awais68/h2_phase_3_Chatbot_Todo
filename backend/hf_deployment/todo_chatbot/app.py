@@ -48,6 +48,32 @@ def on_startup():
     """Initialize database tables on startup."""
     SQLModel.metadata.create_all(engine)
 
+    # Add missing columns to tasks table if they don't exist
+    from sqlalchemy import text
+    from src.db.session import engine as db_engine
+
+    migration_queries = [
+        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS priority VARCHAR DEFAULT 'medium'",
+        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'pending'",
+        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS category VARCHAR DEFAULT 'General'",
+        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS tags VARCHAR DEFAULT '[]'",
+        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recursion VARCHAR",
+        "ALTER TABLE tasks ADD COLUMN IF NOT EXISTS shopping_list VARCHAR DEFAULT '[]'",
+    ]
+
+    try:
+        with db_engine.connect() as conn:
+            for query in migration_queries:
+                try:
+                    conn.execute(text(query))
+                    conn.commit()
+                except Exception as e:
+                    # Column might already exist or other non-critical error
+                    print(f"Migration note: {e}")
+        print("Database migration check completed")
+    except Exception as e:
+        print(f"Database migration warning: {e}")
+
 
 @app.get("/")
 def root():
