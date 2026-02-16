@@ -1,0 +1,1 @@
+cd /media/awais/6372445e-8fda-42fa-9034-61babd7dafd1/150\ GB\ DATA\ TRANSFER/hackathon\ series/hackathon-2/phase-3\ chatbot_todo/backend/hf_deployment && source venv/bin/activate && uvicorn app:app --reload --port 8000
