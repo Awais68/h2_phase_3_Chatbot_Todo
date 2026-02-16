@@ -15,7 +15,7 @@ from src.db.session import get_session
 # ============================================================================
 
 @mcp_server.tool("add_task")
-def add_task(user_id: int, title: str, description: str = "", session: Session = None) -> Dict[str, Any]:
+def add_task(user_id: str, title: str, description: str = "", session: Session = None) -> Dict[str, Any]:
     """
     Create a new task for the user.
 
@@ -64,7 +64,7 @@ def add_task(user_id: int, title: str, description: str = "", session: Session =
 
 
 @mcp_server.tool("list_tasks")
-def list_tasks(user_id: int, status: str = "all", session: Session = None) -> Dict[str, Any]:
+def list_tasks(user_id: str, status: str = "all", session: Session = None) -> Dict[str, Any]:
     """
     Retrieve the user's tasks, optionally filtered by completion status.
 
@@ -114,7 +114,7 @@ def list_tasks(user_id: int, status: str = "all", session: Session = None) -> Di
 
 
 @mcp_server.tool("complete_task")
-def complete_task(user_id: int, task_id: int, session: Session = None) -> Dict[str, Any]:
+def complete_task(user_id: str, task_id: int, session: Session = None) -> Dict[str, Any]:
     """
     Mark a task as complete.
 

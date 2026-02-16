@@ -18,12 +18,12 @@ mcp = FastMCP("Todo Task Manager")
 # ============================================================================
 
 @mcp.tool()
-def add_task(user_id: int, title: str, description: str = "") -> Dict[str, Any]:
+def add_task(user_id: str, title: str, description: str = "") -> Dict[str, Any]:
     """
     Create a new task for the user.
     
     Args:
-        user_id: The ID of the user creating the task
+        user_id: The ID of the user creating the task (string - VARCHAR user ID from Better Auth)
         title: The task title (required, 1-200 characters)
         description: Optional task description (max 1000 characters)
     
@@ -66,12 +66,12 @@ def add_task(user_id: int, title: str, description: str = "") -> Dict[str, Any]:
 
 
 @mcp.tool()
-def list_tasks(user_id: int, status: str = "all") -> Dict[str, Any]:
+def list_tasks(user_id: str, status: str = "all") -> Dict[str, Any]:
     """
     Retrieve the user's tasks, optionally filtered by completion status.
     
     Args:
-        user_id: The ID of the user whose tasks to retrieve
+        user_id: The ID of the user whose tasks to retrieve (string - VARCHAR user ID from Better Auth)
         status: Filter by status ('all', 'pending', 'completed')
     
     Returns:
@@ -117,12 +117,12 @@ def list_tasks(user_id: int, status: str = "all") -> Dict[str, Any]:
 
 
 @mcp.tool()
-def complete_task(user_id: int, task_id: int) -> Dict[str, Any]:
+def complete_task(user_id: str, task_id: int) -> Dict[str, Any]:
     """
     Mark a task as completed.
     
     Args:
-        user_id: The ID of the user who owns the task
+        user_id: The ID of the user who owns the task (string - VARCHAR user ID from Better Auth)
         task_id: The ID of the task to complete
     
     Returns:
@@ -156,7 +156,7 @@ def complete_task(user_id: int, task_id: int) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def delete_task(user_id: int, task_id: int) -> Dict[str, Any]:
+def delete_task(user_id: str, task_id: int) -> Dict[str, Any]:
     """
     Delete a task.
     
@@ -188,7 +188,7 @@ def delete_task(user_id: int, task_id: int) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def update_task(user_id: int, task_id: int, title: Optional[str] = None, 
+def update_task(user_id: str, task_id: int, title: Optional[str] = None, 
                 description: Optional[str] = None, completed: Optional[bool] = None) -> Dict[str, Any]:
     """
     Update a task's details.
@@ -245,7 +245,7 @@ def update_task(user_id: int, task_id: int, title: Optional[str] = None,
 # ============================================================================
 
 @mcp.tool()
-def create_recurring_task(user_id: int, title: str, description: str = "", 
+def create_recurring_task(user_id: str, title: str, description: str = "", 
                          frequency: str = "daily", start_date: Optional[str] = None) -> Dict[str, Any]:
     """
     Create a new recurring task.
@@ -300,7 +300,7 @@ def create_recurring_task(user_id: int, title: str, description: str = "",
 
 
 @mcp.tool()
-def list_recurring_tasks(user_id: int, active_only: bool = True) -> Dict[str, Any]:
+def list_recurring_tasks(user_id: str, active_only: bool = True) -> Dict[str, Any]:
     """
     List all recurring tasks for a user.
     
@@ -339,7 +339,7 @@ def list_recurring_tasks(user_id: int, active_only: bool = True) -> Dict[str, An
 
 
 @mcp.tool()
-def pause_recurring_task(user_id: int, recurring_task_id: int) -> Dict[str, Any]:
+def pause_recurring_task(user_id: str, recurring_task_id: int) -> Dict[str, Any]:
     """
     Pause a recurring task.
     
@@ -373,7 +373,7 @@ def pause_recurring_task(user_id: int, recurring_task_id: int) -> Dict[str, Any]
 
 
 @mcp.tool()
-def resume_recurring_task(user_id: int, recurring_task_id: int) -> Dict[str, Any]:
+def resume_recurring_task(user_id: str, recurring_task_id: int) -> Dict[str, Any]:
     """
     Resume a paused recurring task.
     
@@ -407,7 +407,7 @@ def resume_recurring_task(user_id: int, recurring_task_id: int) -> Dict[str, Any
 
 
 @mcp.tool()
-def delete_recurring_task(user_id: int, recurring_task_id: int) -> Dict[str, Any]:
+def delete_recurring_task(user_id: str, recurring_task_id: int) -> Dict[str, Any]:
     """
     Delete a recurring task.
     
@@ -443,7 +443,7 @@ def delete_recurring_task(user_id: int, recurring_task_id: int) -> Dict[str, Any
 # ============================================================================
 
 @mcp.tool()
-def get_task_statistics(user_id: int) -> Dict[str, Any]:
+def get_task_statistics(user_id: str) -> Dict[str, Any]:
     """
     Get task statistics for a user.
     
@@ -478,7 +478,7 @@ def get_task_statistics(user_id: int) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def get_tasks_over_time(user_id: int, days: int = 30) -> Dict[str, Any]:
+def get_tasks_over_time(user_id: str, days: int = 30) -> Dict[str, Any]:
     """
     Get task creation trend over time.
     
@@ -518,7 +518,7 @@ def get_tasks_over_time(user_id: int, days: int = 30) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def get_completion_analytics(user_id: int, days: int = 30) -> Dict[str, Any]:
+def get_completion_analytics(user_id: str, days: int = 30) -> Dict[str, Any]:
     """
     Get task completion analytics.
     
@@ -561,7 +561,7 @@ def get_completion_analytics(user_id: int, days: int = 30) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def get_productivity_hours(user_id: int, days: int = 7) -> Dict[str, Any]:
+def get_productivity_hours(user_id: str, days: int = 7) -> Dict[str, Any]:
     """
     Analyze productivity by hour of day.
     

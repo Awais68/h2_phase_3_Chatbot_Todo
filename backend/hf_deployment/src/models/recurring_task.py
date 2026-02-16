@@ -25,7 +25,7 @@ class RecurringTask(SQLModel, table=True):
     __tablename__ = "recurring_tasks"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id", index=True)
+    user_id: str = Field(foreign_key="backend_users.id", index=True, max_length=255)
     title: str = Field(max_length=200, min_length=1)
     description: Optional[str] = Field(default="", max_length=1000)
     frequency: str = Field(max_length=20)  # 'daily', 'weekly', 'monthly'
@@ -56,7 +56,7 @@ class RecurringTaskUpdate(SQLModel):
 class RecurringTaskResponse(SQLModel):
     """Schema for recurring task response."""
     id: int
-    user_id: int
+    user_id: str
     title: str
     description: Optional[str]
     frequency: str

@@ -163,20 +163,20 @@ Example responses:
         return tools
 
     def _execute_mcp_tool(self, tool_name: str, arguments: Dict[str, Any], 
-                         user_id: int) -> Dict[str, Any]:
+                         user_id: str) -> Dict[str, Any]:
         """
         Execute a tool by calling the function directly.
         
         Args:
             tool_name: Name of the tool to execute
             arguments: Tool arguments
-            user_id: User ID (integer - database user ID)
+            user_id: User ID (string - VARCHAR user ID from database)
         
         Returns:
             Tool execution result
         """
-        # Add user_id to arguments (ensure it's an integer)
-        arguments["user_id"] = int(user_id)
+        # Add user_id to arguments (keep as string to match database schema)
+        arguments["user_id"] = user_id
         
         # Get the tool function from our map
         tool_func = self.mcp_tool_map.get(tool_name)
@@ -197,7 +197,7 @@ Example responses:
     def run_agent(
         self,
         messages: List[Dict[str, str]],
-        user_id: int,
+        user_id: str,
         session: Any = None
     ) -> Dict[str, Any]:
         """
@@ -205,7 +205,7 @@ Example responses:
         
         Args:
             messages: Conversation history
-            user_id: Database user ID (integer)
+            user_id: Database user ID (string - VARCHAR from database)
             session: Database session
             
         Returns:

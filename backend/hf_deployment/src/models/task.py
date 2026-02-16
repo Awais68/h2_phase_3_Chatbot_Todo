@@ -26,7 +26,7 @@ class Task(SQLModel, table=True):
 
     # Existing fields from 001-todo-ai-chatbot
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id", index=True)
+    user_id: str = Field(foreign_key="backend_users.id", index=True, max_length=255)
     title: str = Field(max_length=200, min_length=1)
     description: str = Field(default="", max_length=1000)
     completed: bool = Field(default=False)

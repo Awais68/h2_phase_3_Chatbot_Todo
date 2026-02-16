@@ -26,6 +26,7 @@ MIGRATIONS = [
     "src/db/migrations/versions/007_fix_action_type_constraint.sql",
     "src/db/migrations/versions/008_create_backend_users.sql",
     "src/db/migrations/versions/009_add_missing_task_columns.sql",
+    "src/db/migrations/versions/010_update_tasks_user_id_to_varchar.sql",
 ]
 
 def run_migration(conn, migration_file):
