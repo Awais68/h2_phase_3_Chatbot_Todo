@@ -70,7 +70,7 @@ export default function ChatbotPage() {
           <div className="h-[calc(100vh-16rem)]">
             {activeTab === 'chat' && <ChatTab userId={userId.toString()} />}
             {activeTab === 'analytics' && <AnalyticsTab userId={userId} />}
-            {activeTab === 'recurring' && <RecurringTab userId={userId} />}
+            {activeTab === 'recurring' && <RecurringTab isDark={false} />}
           </div>
         </div>
       </div>

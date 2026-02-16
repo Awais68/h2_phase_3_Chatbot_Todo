@@ -16,6 +16,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useSession } from '@/lib/auth-client'
+
+// Helper function to get consistent userId
+const getUserId = (session: any): string => {
+  return session?.user?.email || session?.user?.id || 'anonymous';
+};
 
 interface TaskHistoryItem {
   history_id: number
@@ -39,7 +45,28 @@ interface HistoryResponse {
   total_pages: number
 }
 
+// Group history items by date
+const groupHistoryByDate = (items: TaskHistoryItem[]) => {
+  const grouped: Record<string, TaskHistoryItem[]> = {}
+  
+  items.forEach(item => {
+    const date = new Date(item.action_date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+    
+    if (!grouped[date]) {
+      grouped[date] = []
+    }
+    grouped[date].push(item)
+  })
+  
+  return grouped
+}
+
 export function HistoryTab() {
+  const { data: session } = useSession()
   const [history, setHistory] = useState<TaskHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -50,10 +77,14 @@ export function HistoryTab() {
   const pageSize = 50
 
   useEffect(() => {
-    fetchHistory()
-  }, [searchQuery, actionTypeFilter, currentPage])
+    if (session?.user) {
+      fetchHistory()
+    }
+  }, [searchQuery, actionTypeFilter, currentPage, session])
 
   const fetchHistory = async () => {
+    if (!session?.user) return
+    
     setLoading(true)
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
@@ -70,11 +101,18 @@ export function HistoryTab() {
         params.append('action_type', actionTypeFilter)
       }
 
-      // Use demo user ID if not authenticated
-      const userId = localStorage.getItem('userId') || '1'
+      // Use session user ID
+      const userId = getUserId(session)
       params.append('user_id', userId)
 
-      const response = await fetch(`${API_BASE_URL}/api/history?${params.toString()}`)
+      const userEmail = session?.user?.email
+      const userName = session?.user?.name
+
+      const headers: Record<string, string> = {}
+      if (userEmail) headers['X-User-Email'] = userEmail
+      if (userName) headers['X-User-Name'] = userName
+
+      const response = await fetch(`${API_BASE_URL}/api/history?${params.toString()}`, { headers })
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -97,11 +135,21 @@ export function HistoryTab() {
   }
 
   const handleRestore = async (historyId: number) => {
+    if (!session?.user) return
+    
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-      const userId = localStorage.getItem('userId') || '1'
+      const userId = getUserId(session)
+      const userEmail = session?.user?.email
+      const userName = session?.user?.name
+
+      const headers: Record<string, string> = {}
+      if (userEmail) headers['X-User-Email'] = userEmail
+      if (userName) headers['X-User-Name'] = userName
+
       const response = await fetch(`${API_BASE_URL}/api/history/${historyId}/restore?user_id=${userId}`, {
         method: 'POST',
+        headers,
       })
 
       if (response.ok) {
@@ -128,6 +176,24 @@ export function HistoryTab() {
       hour: '2-digit',
       minute: '2-digit',
     })
+  }
+
+  // Group history by date
+  const groupedHistory = groupHistoryByDate(history)
+  const dateGroups = Object.entries(groupedHistory).sort((a, b) => {
+    return new Date(b[1][0].action_date).getTime() - new Date(a[1][0].action_date).getTime()
+  })
+
+  if (!session?.user) {
+    return (
+      <div className="container mx-auto p-6 max-w-6xl">
+        <Card>
+          <CardContent className="p-12 text-center">
+            <p className="text-muted-foreground">Please log in to view your task history</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -197,12 +263,12 @@ export function HistoryTab() {
             </div>
           </div>
 
-          {/* History List */}
+          {/* History List - Grouped by Date */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : history.length === 0 ? (
+          ) : dateGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Calendar className="w-16 h-16 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No history entries</h3>
@@ -212,68 +278,80 @@ export function HistoryTab() {
             </div>
           ) : (
             <>
-              <div className="space-y-3">
-                {history.map((item) => (
-                  <motion.div
-                    key={item.history_id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium">{item.title}</h3>
-                          <Badge
-                            variant={item.action_type === 'completed' ? 'default' : 'destructive'}
-                          >
-                            {item.action_type === 'completed' ? (
-                              <>
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Completed
-                              </>
-                            ) : (
-                              <>
-                                <Trash2 className="w-3 h-3 mr-1" />
-                                Deleted
-                              </>
-                            )}
-                          </Badge>
-                          {item.recurrence_pattern && (
-                            <Badge variant="outline">
-                              Recurring: {item.recurrence_pattern}
-                            </Badge>
-                          )}
-                        </div>
-
-                        {item.description && (
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {item.description}
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>Action: {formatDate(item.action_date)}</span>
-                          {item.due_date && (
-                            <span>Due: {formatDate(item.due_date)}</span>
-                          )}
-                          <span>Retention: {formatDate(item.retention_until)}</span>
-                        </div>
-                      </div>
-
-                      {item.can_restore && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleRestore(item.history_id)}
-                          className="flex-shrink-0"
-                        >
-                          <RotateCcw className="w-4 h-4 mr-1" />
-                          Restore
-                        </Button>
-                      )}
+              <div className="space-y-6">
+                {dateGroups.map(([date, items]) => (
+                  <div key={date} className="space-y-3">
+                    {/* Date Header */}
+                    <div className="flex items-center gap-2 py-2 px-3 bg-muted/50 rounded-lg sticky top-0 z-10">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <h3 className="font-semibold text-sm">{date}</h3>
+                      <span className="text-xs text-muted-foreground">({items.length} {items.length === 1 ? 'task' : 'tasks'})</span>
                     </div>
-                  </motion.div>
+                    
+                    {/* Tasks for this date */}
+                    {items.map((item) => (
+                      <motion.div
+                        key={item.history_id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="border rounded-lg p-4 hover:shadow-md transition-shadow ml-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-medium">{item.title}</h3>
+                              <Badge
+                                variant={item.action_type === 'completed' ? 'default' : 'destructive'}
+                              >
+                                {item.action_type === 'completed' ? (
+                                  <>
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    Completed
+                                  </>
+                                ) : (
+                                  <>
+                                    <Trash2 className="w-3 h-3 mr-1" />
+                                    Deleted
+                                  </>
+                                )}
+                              </Badge>
+                              {item.recurrence_pattern && (
+                                <Badge variant="outline">
+                                  Recurring: {item.recurrence_pattern}
+                                </Badge>
+                              )}
+                            </div>
+
+                            {item.description && (
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {item.description}
+                              </p>
+                            )}
+
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>Action: {formatDate(item.action_date)}</span>
+                              {item.due_date && (
+                                <span>Due: {formatDate(item.due_date)}</span>
+                              )}
+                              <span>Retention: {formatDate(item.retention_until)}</span>
+                            </div>
+                          </div>
+
+                          {item.can_restore && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRestore(item.history_id)}
+                              className="flex-shrink-0"
+                            >
+                              <RotateCcw className="w-4 h-4 mr-1" />
+                              Restore
+                            </Button>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 ))}
               </div>
 

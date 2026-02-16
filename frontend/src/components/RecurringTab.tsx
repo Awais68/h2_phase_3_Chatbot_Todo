@@ -1,119 +1,121 @@
 /**
- * Recurring Tasks Tab Component - Manage Recurring Tasks
+ * Recurring Tasks Tab Component - Display Tasks with Recursion
  */
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Repeat, Calendar, CheckCircle, Clock } from 'lucide-react';
+import { useSession } from '@/lib/auth-client';
+import { api } from '@/lib/api';
+
+// Helper function to get consistent userId
+const getUserId = (session: any): string => {
+  return session?.user?.email || session?.user?.id || 'anonymous';
+};
 
 interface RecurringTask {
-  recurring_task_id: number;
+  id: string;
   title: string;
   description: string;
-  frequency: string;
-  frequency_value: number | null;
-  is_active: boolean;
-  last_generated: string | null;
-  created_at: string;
+  recursion: string;
+  priority: string;
+  status: string;
+  category: string;
+  dueDate: string;
+  createdAt: string;
+  shoppingList?: any[];
+  tags: string[];
 }
 
 interface RecurringTabProps {
-  userId: number;
+  isDark: boolean;
 }
 
-export default function RecurringTab({ userId }: RecurringTabProps) {
+export default function RecursionTab({ isDark }: RecurringTabProps) {
+  const { data: session } = useSession();
   const [recurringTasks, setRecurringTasks] = useState<RecurringTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    frequency: 'daily',
-    frequency_value: null as number | null
-  });
+  const [selectedTask, setSelectedTask] = useState<RecurringTask | null>(null);
 
   useEffect(() => {
-    fetchRecurringTasks();
-  }, [userId]);
+    if (session?.user) {
+      fetchRecurringTasks();
+    }
+  }, [session]);
 
   const fetchRecurringTasks = async () => {
+    if (!session?.user) return;
+    
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/${userId}/recurring`);
-      const data = await response.json();
-      setRecurringTasks(data.recurring_tasks || []);
+      const userId = getUserId(session);
+      const userEmail = session?.user?.email;
+      const userName = session?.user?.name;
+
+      // Fetch all tasks and filter those with recursion field
+      const tasks = await api.tasks.list({ userId, userEmail, userName });
+      
+      // Filter tasks that have recursion set
+      const recurringTasks: RecurringTask[] = tasks
+        .filter((task: any) => task.recursion)
+        .map((task: any) => ({
+          id: task.id.toString(),
+          title: task.title,
+          description: task.description || '',
+          recursion: task.recursion,
+          priority: task.priority || 'medium',
+          status: task.status || 'pending',
+          category: task.category || 'General',
+          dueDate: task.dueDate || task.due_date,
+          createdAt: task.createdAt || task.created_at,
+          shoppingList: task.shopping_list || task.shoppingList || task.subitems || [],
+          tags: task.tags || []
+        }));
+      
+      setRecurringTasks(recurringTasks);
     } catch (error) {
       console.error('Error fetching recurring tasks:', error);
+      setRecurringTasks([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const createRecurringTask = async () => {
-    if (!formData.title.trim()) return;
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'No date set';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/${userId}/recurring`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        setFormData({ title: '', description: '', frequency: 'daily', frequency_value: null });
-        setShowCreateForm(false);
-        fetchRecurringTasks();
-      }
-    } catch (error) {
-      console.error('Error creating recurring task:', error);
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'critical':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'high':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'low':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
 
-  const toggleTaskStatus = async (taskId: number, isActive: boolean) => {
-    const endpoint = isActive ? 'pause' : 'resume';
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/${userId}/recurring/${taskId}/${endpoint}`,
-        { method: 'PATCH' }
-      );
-
-      if (response.ok) {
-        fetchRecurringTasks();
-      }
-    } catch (error) {
-      console.error('Error toggling task status:', error);
-    }
-  };
-
-  const deleteRecurringTask = async (taskId: number) => {
-    if (!confirm('Are you sure you want to delete this recurring task?')) return;
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/${userId}/recurring/${taskId}`,
-        { method: 'DELETE' }
-      );
-
-      if (response.ok) {
-        fetchRecurringTasks();
-      }
-    } catch (error) {
-      console.error('Error deleting recurring task:', error);
-    }
-  };
-
-  const getFrequencyLabel = (frequency: string, value: number | null) => {
-    if (frequency === 'daily') return 'Daily';
-    if (frequency === 'weekly') {
-      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      return `Weekly (${value !== null ? days[value] : 'Every week'})`;
-    }
-    if (frequency === 'monthly') {
-      return `Monthly (Day ${value || 1})`;
-    }
-    return frequency;
-  };
+  if (!session?.user) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">Please log in to view recurring tasks</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -129,183 +131,115 @@ export default function RecurringTab({ userId }: RecurringTabProps) {
   return (
     <div className="h-full overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-          Recurring Tasks
-        </h2>
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          {showCreateForm ? 'Cancel' : '+ New Recurring Task'}
-        </button>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+            <Repeat className="w-6 h-6" />
+            Recurring Tasks
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Tasks with monthly, weekly, or daily recurrence
+          </p>
+        </div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">
+          {recurringTasks.length} {recurringTasks.length === 1 ? 'task' : 'tasks'}
+        </div>
       </div>
 
-      {/* Create Form */}
-      {showCreateForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-            Create Recurring Task
-          </h3>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Title *
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g., Daily standup meeting"
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Description
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Optional description"
-                rows={3}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Frequency *
-              </label>
-              <select
-                value={formData.frequency}
-                onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-
-            {formData.frequency === 'weekly' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Day of Week
-                </label>
-                <select
-                  value={formData.frequency_value || 0}
-                  onChange={(e) => setFormData({ ...formData, frequency_value: parseInt(e.target.value) })}
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="0">Sunday</option>
-                  <option value="1">Monday</option>
-                  <option value="2">Tuesday</option>
-                  <option value="3">Wednesday</option>
-                  <option value="4">Thursday</option>
-                  <option value="5">Friday</option>
-                  <option value="6">Saturday</option>
-                </select>
-              </div>
-            )}
-
-            {formData.frequency === 'monthly' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Day of Month (1-31)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={formData.frequency_value || 1}
-                  onChange={(e) => setFormData({ ...formData, frequency_value: parseInt(e.target.value) })}
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-            )}
-
-            <button
-              onClick={createRecurringTask}
-              disabled={!formData.title.trim()}
-              className="w-full px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              Create Recurring Task
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Recurring Tasks List */}
       {recurringTasks.length === 0 ? (
-        <div className="text-center text-gray-500 dark:text-gray-400 mt-12">
-          <p className="text-lg">No recurring tasks yet</p>
-          <p className="text-sm mt-2">Create your first recurring task to get started!</p>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Repeat className="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" />
+          <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-2">
+            No recurring tasks
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm">
+            Tasks marked with recursion (weekly, monthly, daily) will appear here
+          </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {recurringTasks.map((task) => (
-            <div
-              key={task.recurring_task_id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+            <motion.div
+              key={task.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg p-5 hover:shadow-xl transition-all cursor-pointer border-l-4 ${
+                task.priority === 'critical' ? 'border-red-500' :
+                task.priority === 'high' ? 'border-orange-500' :
+                task.priority === 'medium' ? 'border-yellow-500' :
+                'border-green-500'
+              }`}
+              onClick={() => setSelectedTask(selectedTask?.id === task.id ? null : task)}
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                      {task.title}
-                    </h3>
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        task.is_active
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                      }`}
-                    >
-                      {task.is_active ? 'Active' : 'Paused'}
-                    </span>
-                  </div>
-
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">
+                    {task.title}
+                  </h3>
                   {task.description && (
-                    <p className="text-gray-600 dark:text-gray-400 mt-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                       {task.description}
                     </p>
                   )}
-
-                  <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center">
-                      🔄 {getFrequencyLabel(task.frequency, task.frequency_value)}
-                    </span>
-                    {task.last_generated && (
-                      <span className="flex items-center">
-                        📅 Last: {new Date(task.last_generated).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex space-x-2 ml-4">
-                  <button
-                    onClick={() => toggleTaskStatus(task.recurring_task_id, task.is_active)}
-                    className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                      task.is_active
-                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200'
-                        : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200'
-                    }`}
-                  >
-                    {task.is_active ? 'Pause' : 'Resume'}
-                  </button>
-
-                  <button
-                    onClick={() => deleteRecurringTask(task.recurring_task_id)}
-                    className="px-3 py-1 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 dark:bg-red-900 dark:text-red-200 text-sm transition-colors"
-                  >
-                    Delete
-                  </button>
                 </div>
               </div>
-            </div>
+
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                  {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                  <Repeat className="w-3 h-3" />
+                  {task.recursion}
+                </span>
+                {task.status === 'completed' && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    <CheckCircle className="w-3 h-3" />
+                    Completed
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {formatDate(task.dueDate)}
+                </span>
+                <span>{task.category}</span>
+              </div>
+
+              {/* Sub-items/Shopping List */}
+              {selectedTask?.id === task.id && task.shoppingList && task.shoppingList.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+                >
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Sub-items:
+                  </h4>
+                  {task.shoppingList.map((category: any, idx: number) => (
+                    <div key={idx} className="mb-2">
+                      {category.name && (
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          {category.name}
+                        </p>
+                      )}
+                      {category.items && category.items.length > 0 && (
+                        <ul className="space-y-1 ml-2">
+                          {category.items.map((item: any, itemIdx: number) => (
+                            <li key={itemIdx} className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                              <span className={item.completed ? 'line-through' : ''}>
+                                • {item.name} {item.quantity > 1 && `(${item.quantity})`}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </motion.div>
           ))}
         </div>
       )}

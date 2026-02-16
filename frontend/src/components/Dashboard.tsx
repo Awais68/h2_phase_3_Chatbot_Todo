@@ -302,12 +302,14 @@ const MissionCard = ({
     onEdit,
     onDelete,
     onToggleComplete,
+    onClick,
     isDark
 }: {
     mission: Mission;
     onEdit: (m: Mission) => void;
     onDelete: (id: string) => void;
     onToggleComplete: (id: string) => void;
+    onClick?: (mission: Mission) => void;
     isDark: boolean;
 }) => {
     const [showMenu, setShowMenu] = useState(false);
@@ -470,6 +472,7 @@ const MissionCard = ({
             {/* Open Button */}
             <div className="mt-4 pt-3 border-t border-gray-300 border-opacity-30">
                 <button
+                    onClick={() => onClick?.(mission)}
                     className={`w-full py-2 text-sm rounded-lg border transition-all ${
                         isDark
                             ? 'border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10'
@@ -733,8 +736,8 @@ export default function Dashboard() {
     const [showShoppingList, setShowShoppingList] = useState(false);
     const [shoppingListCategory, setShoppingListCategory] = useState<string>('');
     const [newItemName, setNewItemName] = useState('');
-    const [newItemPrice, setNewItemPrice] = useState(0);
-    const [newItemQuantity, setNewItemQuantity] = useState(1);
+    const [newItemPrice, setNewItemPrice] = useState<number | ''>('');
+    const [newItemQuantity, setNewItemQuantity] = useState<number | ''>('');
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
     const [editingItemMissionId, setEditingItemMissionId] = useState<string | null>(null);
     const [editingItemCategoryId, setEditingItemCategoryId] = useState<string | null>(null);
@@ -814,7 +817,8 @@ export default function Dashboard() {
                         tags: task.tags || [],
                         category: task.category || 'General',
                         recursion: task.recursion,
-                        shoppingList: task.shopping_list || task.shoppingList || []
+                        // Properly handle both subitems and shopping_list fields from backend
+                        shoppingList: task.shopping_list || task.shoppingList || task.subitems || []
                     }));
                     setMissions(mappedTasks);
                 } catch (apiError) {
@@ -1183,13 +1187,16 @@ export default function Dashboard() {
 
     // Add or update item in shopping list
     const addItemToShoppingList = (categoryName: string) => {
-        if (!newItemName.trim() || newItemPrice < 0) return;
+        if (!newItemName.trim() || (typeof newItemPrice === 'number' && newItemPrice < 0)) return;
+        
+        const finalPrice = typeof newItemPrice === 'number' ? newItemPrice : 0;
+        const finalQuantity = typeof newItemQuantity === 'number' ? newItemQuantity : 1;
 
         const newItem: Item = {
             id: editingItemId || Date.now().toString(),
             name: newItemName,
-            price: newItemPrice,
-            quantity: newItemQuantity,
+            price: finalPrice,
+            quantity: finalQuantity,
             completed: editingItemId ? (missions
                 .find(m => m.id === editingItemMissionId)?.shoppingList
                 ?.find(c => c.id === editingItemCategoryId)?.items
@@ -1352,8 +1359,8 @@ export default function Dashboard() {
 
         // Reset form
         setNewItemName('');
-        setNewItemPrice(0);
-        setNewItemQuantity(1);
+        setNewItemPrice('');
+        setNewItemQuantity('');
         setEditingItemId(null);
         setEditingItemMissionId(null);
         setEditingItemCategoryId(null);
@@ -2553,6 +2560,7 @@ export default function Dashboard() {
                                                                 onEdit={handleEditMission}
                                                                 onDelete={handleDeleteMission}
                                                                 onToggleComplete={handleToggleComplete}
+                                                                onClick={handleMissionCardClick}
                                                                 isDark={isDark}
                                                             />
                                                             
@@ -2680,8 +2688,8 @@ export default function Dashboard() {
                     onClick={() => {
                         setShowShoppingList(false);
                         setNewItemName('');
-                        setNewItemPrice(0);
-                        setNewItemQuantity(1);
+                        setNewItemPrice('');
+                        setNewItemQuantity('');
                         setEditingItemId(null);
                         setEditingItemMissionId(null);
                         setEditingItemCategoryId(null);
@@ -2702,8 +2710,8 @@ export default function Dashboard() {
                                 onClick={() => {
                                     setShowShoppingList(false);
                                     setNewItemName('');
-                                    setNewItemPrice(0);
-                                    setNewItemQuantity(1);
+                                    setNewItemPrice('');
+                                    setNewItemQuantity('');
                                 }}
                                 className={isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'}
                             >
@@ -2730,11 +2738,12 @@ export default function Dashboard() {
                                     <input
                                         type="number"
                                         value={newItemPrice}
-                                        onChange={(e) => setNewItemPrice(parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setNewItemPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 transition-colors
                                             ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'}`}
                                         min="0"
                                         step="0.01"
+                                        placeholder="0.00"
                                     />
                                 </div>
 
@@ -2743,10 +2752,12 @@ export default function Dashboard() {
                                     <input
                                         type="number"
                                         value={newItemQuantity}
-                                        onChange={(e) => setNewItemQuantity(parseInt(e.target.value) || 1)}
+                                        onChange={(e) => setNewItemQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))}
                                         className={`w-full border rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-400 transition-colors
                                             ${isDark ? 'bg-gray-800 border-gray-600 text-white' : 'bg-gray-50 border-gray-300 text-gray-800'}`}
-                                        min="1"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="1.00"
                                     />
                                 </div>
                             </div>
@@ -2767,8 +2778,8 @@ export default function Dashboard() {
                                 onClick={() => {
                                     setShowShoppingList(false);
                                     setNewItemName('');
-                                    setNewItemPrice(0);
-                                    setNewItemQuantity(1);
+                                    setNewItemPrice('');
+                                    setNewItemQuantity('');
                                     setEditingItemId(null);
                                     setEditingItemMissionId(null);
                                     setEditingItemCategoryId(null);

@@ -50,10 +50,16 @@ def add_task(user_id: int, title: str, description: str = "", session: Session =
     session.commit()
     session.refresh(task)
 
+    # Return full task details for better UX
     return {
         "task_id": task.id,
-        "status": "pending",
-        "title": task.title
+        "title": task.title,
+        "description": task.description,
+        "status": task.status,
+        "category": task.category or "General",
+        "priority": task.priority or "medium",
+        "created_at": task.created_at.strftime("%Y-%m-%d %I:%M:%S %p") if task.created_at else "",
+        "due_date": task.due_date.strftime("%Y-%m-%d") if task.due_date else None
     }
 
 
@@ -91,8 +97,14 @@ def list_tasks(user_id: int, status: str = "all", session: Session = None) -> Di
             "title": task.title,
             "description": task.description,
             "completed": task.completed,
-            "created_at": task.created_at.isoformat(),
-            "updated_at": task.updated_at.isoformat()
+            "status": task.status or "pending",
+            "category": task.category or "General",
+            "priority": task.priority or "medium",
+            "created_at": task.created_at.strftime("%Y-%m-%d %I:%M:%S %p") if task.created_at else "",
+            "updated_at": task.updated_at.strftime("%Y-%m-%d %I:%M:%S %p") if task.updated_at else "",
+            "due_date": task.due_date.strftime("%Y-%m-%d") if task.due_date else None,
+            "subitems": task.subitems or [],
+            "recursion": task.recursion
         })
 
     return {
